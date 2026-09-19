@@ -35,3 +35,23 @@
 **Decision:** Simulator failures are not counted as Red failures or Blue victories.
 
 **Reason:** Mixing implementation failures with agent performance would invalidate the experimental interpretation.
+
+## Python 3.14 compatibility
+
+**Decision:** Support Python 3.13 and Python 3.14.
+
+**Original constraint:** The project initially specified Python 3.13 only.
+
+**Problem:** The development machine uses Python 3.14.6. The original constraint prevented installation of the project even though the pinned NetworkX 3.6.1 dependency could be downloaded successfully.
+
+**Validation:**
+- Python version: 3.14.6
+- NetworkX version: 3.6.1
+- AEGIS installed successfully after changing the Python requirement to `>=3.13,<3.15`.
+- The Phase 1 test suite passed: 6 tests passed.
+
+**Result:** `pyproject.toml` now declares Python `>=3.13,<3.15`.
+
+**Rationale:** This allows the existing development environment to be used without introducing another Python installation while retaining an explicit upper bound for reproducibility.
+
+**Limitation:** Python 3.15 is not claimed as supported. Compatibility with future Python versions will be evaluated deliberately rather than assumed.
