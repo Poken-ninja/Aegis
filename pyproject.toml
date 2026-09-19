@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "aegis-cyber-range"
 version = "0.1.0"
 description = "Synthetic red/blue cyber-range for network-configuration generalization research."
-requires-python = ">=3.13,<3.14"
+requires-python = ">=3.13,<3.15"
 dependencies = [
     "networkx==3.6.1",
 ]
