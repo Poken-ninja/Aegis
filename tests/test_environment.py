@@ -1045,3 +1045,71 @@ def test_network_with_multiple_critical_hosts_raises_simulator_error() -> None:
                 target="web01",
             )
         )
+
+
+def test_action_history_records_successful_actions_only() -> None:
+    environment = AegisEnvironment(seed=42)
+    environment.reset()
+
+    red_action = Action(
+        agent=Agent.RED,
+        action_type=ActionType.DISCOVER,
+        target="web01",
+    )
+
+    environment.step(red_action)
+
+    assert environment.action_history == [red_action]
+
+    with pytest.raises(ValueError):
+        environment.step(
+            Action(
+                agent=Agent.BLUE,
+                action_type=ActionType.DETECT,
+                target="web01",
+            )
+        )
+
+    assert environment.action_history == [red_action]
+
+
+def test_step_count_counts_individual_agent_actions() -> None:
+    environment = AegisEnvironment(seed=42)
+    environment.reset()
+
+    environment.step(
+        Action(
+            agent=Agent.RED,
+            action_type=ActionType.DISCOVER,
+            target="web01",
+        )
+    )
+    assert environment.state is not None
+    assert environment.state.step_count == 1
+
+    environment.step(
+        Action(
+            agent=Agent.BLUE,
+            action_type=ActionType.MONITOR,
+        )
+    )
+    assert environment.state.step_count == 2
+
+
+def test_highest_acquired_privilege_applies_across_hosts() -> None:
+    environment = AegisEnvironment(seed=3)
+    environment.reset()
+
+    environment.state.red_position = "app01"
+    environment.state.discovered_hosts.add("app01")
+    environment.state.host_privileges["web01"] = PrivilegeLevel.ADMIN
+
+    state = environment.step(
+        Action(
+            agent=Agent.RED,
+            action_type=ActionType.EXPLOIT,
+            target="app01",
+        )
+    )
+
+    assert "app01" in state.compromised_hosts
