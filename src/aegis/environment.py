@@ -24,19 +24,23 @@ class AegisEnvironment:
         if max_steps <= 0:
             raise ValueError("max_steps must be positive")
 
-        self.network = network or build_reference_network(seed=seed)
+        # seed is the episode seed. A supplied network owns its configuration
+        # identity and configuration seed separately.
+        self.network = network or build_reference_network()
         self.seed = seed
         self.max_steps = max_steps
         self.rng = random.Random(seed)
 
         self.state: CyberState | None = None
         self.current_agent = Agent.RED
+        self.action_history: list[Action] = []
 
     def reset(self) -> CyberState:
-        """Start a fresh episode."""
+        """Start a fresh episode with the same episode seed."""
         self.rng = random.Random(self.seed)
         self.state = CyberState(red_position="internet")
         self.current_agent = Agent.RED
+        self.action_history = []
         return self.state
 
     def step(self, action: Action) -> CyberState:
@@ -58,15 +62,13 @@ class AegisEnvironment:
         else:
             self._apply_blue_action(action)
 
+        self.action_history.append(action)
+        self.state.step_count += 1
+
         self._check_terminal_conditions()
 
         if self.state.outcome is Outcome.IN_PROGRESS:
             self._advance_turn()
-
-            if self.current_agent is Agent.RED:
-                self.state.step_count += 1
-
-            self._check_terminal_conditions()
 
         return self.state
 
@@ -277,7 +279,12 @@ class AegisEnvironment:
             self.state.host_privileges[target] = PrivilegeLevel.ADMIN
 
     def _blue_detect(self, target: str | None) -> None:
-        """Mark a compromised host as detected by Blue."""
+        """Mark a compromised host as detected by Blue.
+
+        This is a Phase-1 state-transition primitive. The eventual RL
+        observation model must determine how Blue can identify candidate
+        hosts without receiving the hidden compromised_hosts state directly.
+        """
 
         if target is None:
             raise ValueError("DETECT requires a target")
