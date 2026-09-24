@@ -292,3 +292,95 @@ When a future decision changes an accepted design:
 7. record experimental implications and limitations.
 
 This creates an auditable chain from **assumption → implementation → test/evidence → revision → validated design**.
+
+## ADR-013 — Simulator errors are exceptions, not episode outcomes
+
+**Status:** Accepted
+
+**Decision:** `Outcome` contains only episode outcomes: `IN_PROGRESS`, `RED_WIN`, `BLUE_WIN`, and `TIMEOUT`. Invalid actions and invalid simulator/network configurations raise exceptions and are recorded separately by experiment infrastructure.
+
+**Reason:** An implementation failure must never be interpreted as Red failure or Blue success. Keeping errors outside the episode outcome enum makes the experimental denominator explicit and prevents simulator defects from becoming performance data.
+
+**Supersedes:** The earlier interpretation of `Outcome.ERROR` as a runtime episode state. ADR-004 remains the governing principle that simulator failures are separate from game outcomes.
+
+## ADR-014 — `step_count` counts individual agent actions
+
+**Status:** Accepted
+
+**Decision:** One environment `step` is one successful Red or Blue action. `step_count` increments once per successful action. `max_steps` is therefore an action budget.
+
+**Reason:** The primary time-to-objective and detection metrics need an unambiguous unit. Counting completed Red/Blue rounds would make the word 'steps' misleading and would complicate comparison with standard RL terminology.
+
+**Research implication:** Red objective time and Blue detection time can be measured directly from the environment action count.
+
+## ADR-015 — V1 Blue victory is containment
+
+**Status:** Accepted
+
+**Decision:** In V1, `BLUE_WIN` occurs only when Blue has detected and isolated Red's current non-critical host. Remediation alone does not produce `BLUE_WIN`.
+
+**Reason:** The smallest defensible Blue objective is successful containment. A broader prevention/recovery model would add mechanisms not required by the core research question.
+
+**Research implication:** Documentation must describe V1 Blue success as containment rather than claiming that all forms of prevention are modeled.
+
+## ADR-016 — Agent observations are separate from hidden simulator state
+
+**Status:** Accepted for Phase 2 design
+
+**Decision:** The simulator maintains ground-truth cyber state, while Red and Blue will receive explicitly defined observations before RL training begins. Blue must not receive `compromised_hosts` directly as an observation.
+
+**Reason:** Otherwise Blue could detect compromise by reading the simulator's hidden answer, making detection a bookkeeping operation rather than an autonomous decision problem.
+
+**Implementation implication:** The current `DETECT` method remains a Phase-1 state-transition primitive. A Phase-2 observation layer must provide candidate evidence/signals that allow Blue to choose detection actions without direct access to hidden compromise state.
+
+**Research implication:** Observation design is a prerequisite for meaningful Blue detection-time and defense-performance experiments.
+
+## ADR-017 — Record successful action history in the environment
+
+**Status:** Accepted
+
+**Decision:** `AegisEnvironment` records the successful action sequence for the current episode in `action_history` and clears it on reset. Invalid actions are not recorded.
+
+**Reason:** Reproducibility requires preserving the action sequence that generated a trajectory. Recording it at the simulator boundary reduces the risk of reconstructing trajectories incompletely in later experiment code.
+
+**Research implication:** Experiment logs should still persist configuration ID/seed, episode seed, simulator parameters, and the action history.
+
+## ADR-018 — Remove unused static host privilege metadata
+
+**Status:** Accepted
+
+**Decision:** Remove the unused `Host.privileges` field from the V1 network model. Dynamic Red privilege is represented only by `CyberState.host_privileges` and `PrivilegeLevel`.
+
+**Reason:** The static field was not used by any transition rule and mixed host metadata with dynamic attacker capability. Keeping an unused security-looking field creates ambiguity about what actually affects the experiment.
+
+**Research implication:** Every security-relevant state variable should either affect a defined transition/observation or be removed from V1.
+
+## ADR-019 — Keep `MONITOR` as a Phase-1 placeholder
+
+**Status:** Accepted for Phase 1; revisit before RL
+
+**Decision:** Retain `MONITOR` in the conceptual Blue vocabulary for now, but do not treat the current no-op implementation as the final RL action semantics.
+
+**Reason:** Blue monitoring is central to the cybersecurity concept, but inventing a complex telemetry system during simulator validation would expand scope. Before RL, `MONITOR` must either acquire a minimal causal observation effect or be excluded from the learning action space.
+
+**Research implication:** No RL result may use the current no-op `MONITOR` action as if it represented realistic monitoring.
+
+## ADR-020 — Define generalization at the configuration level
+
+**Status:** Accepted for experiment design
+
+**Decision:** A previously unseen evaluation case must have a configuration ID/seed withheld from training. We will distinguish instance-level novelty from distribution/family novelty and report which type is tested.
+
+**Reason:** A new random seed from an identical configuration family is not automatically evidence of structural generalization. The research question is about previously unseen network configurations.
+
+**Research implication:** The final experiment must specify the training configuration distribution, held-out evaluation set, and whether topology, vulnerability placement, privilege requirements, or other configuration attributes vary.
+
+## ADR-021 — Control stochastic episode randomness in fixed-vs-diverse comparisons
+
+**Status:** Accepted for experiment design
+
+**Decision:** Fixed-training and diverse-training conditions will use matched evaluation episode seeds where practical, identical algorithm/hyperparameters, equal training-step budgets, and the same evaluation protocol.
+
+**Reason:** The independent variable is training exposure to network configuration diversity. Uncontrolled differences in training budget, stochastic outcomes, or evaluation seeds would create confounds.
+
+**Research implication:** Experiment metadata must record training condition, configuration IDs/seeds, episode seeds, algorithm settings, training steps, and evaluation seeds.
