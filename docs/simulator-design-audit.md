@@ -282,9 +282,10 @@ A timeout is not automatically a Blue victory.
 The simulator distinguishes:
 
 - RED_WIN: Red achieved the defined objective;
-- BLUE_WIN: Blue successfully suppressed/contained/prevented Red according to explicit defensive rules;
-- TIMEOUT: neither side achieved a defined win before the step limit;
-- ERROR: simulator/configuration failure.
+- BLUE_WIN: Blue successfully contained Red by isolating Red's current non-critical host;
+- TIMEOUT: neither side achieved a defined win before the action-step limit.
+
+Simulator/configuration failures are exceptions, not episode outcomes.
 
 This distinction is required for valid experimental interpretation.
 
