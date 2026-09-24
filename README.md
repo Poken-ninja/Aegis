@@ -43,14 +43,22 @@ Current work establishes a deterministic, testable network model before reinforc
 
 ```text
 src/aegis/
+  actions.py
+  environment.py
   network.py
+  state.py
 tests/
+  test_actions.py
+  test_environment.py
   test_network.py
+  test_state.py
 docs/
   research-question.md
   cybersecurity-model.md
   rules-of-engagement.md
   decisions.md
+  simulator-design-audit.md
+  experiment-log.md
 ```
 
 RL, multi-agent learning, topology variation, and held-out generalization experiments are intentionally deferred until the simulator semantics are accepted and the Phase-2 observation/action interface is explicitly defined.
