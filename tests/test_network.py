@@ -31,13 +31,37 @@ def test_reference_network_has_expected_connections() -> None:
 
 def test_critical_asset_is_unique() -> None:
     network = build_reference_network()
-    critical_hosts = [host for host in network.hosts() if host.critical]
+
+    critical_hosts = [
+        host for host in network.hosts()
+        if host.critical
+    ]
+
     assert [host.host_id for host in critical_hosts] == ["critical01"]
 
 
+def test_reference_network_has_intended_privilege_requirements() -> None:
+    network = build_reference_network()
+
+    assert network.host("web01").vulnerabilities[0].required_privilege == "none"
+    assert network.host("app01").vulnerabilities[0].required_privilege == "user"
+    assert network.host("work01").vulnerabilities[0].required_privilege == "none"
+    assert network.host("db01").vulnerabilities[0].required_privilege == "admin"
+    assert (
+        network.host("critical01").vulnerabilities[0].required_privilege
+        == "admin"
+    )
+
+
 def test_reference_network_is_reproducibly_identified() -> None:
-    first = build_reference_network(configuration_id="NET_00001", seed=123)
-    second = build_reference_network(configuration_id="NET_00001", seed=123)
+    first = build_reference_network(
+        configuration_id="NET_00001",
+        seed=123,
+    )
+    second = build_reference_network(
+        configuration_id="NET_00001",
+        seed=123,
+    )
 
     assert first.configuration_id == second.configuration_id
     assert first.seed == second.seed
@@ -63,4 +87,6 @@ def test_self_connection_is_rejected() -> None:
     except ValueError as exc:
         assert "Self-connections" in str(exc)
     else:
-        raise AssertionError("Self-connection should raise ValueError")
+        raise AssertionError(
+            "Self-connection should raise ValueError"
+        )

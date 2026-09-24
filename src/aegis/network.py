@@ -33,6 +33,7 @@ class EnterpriseNetwork:
     def __init__(self, configuration_id: str, seed: int) -> None:
         if not configuration_id:
             raise ValueError("configuration_id must not be empty")
+
         self.configuration_id = configuration_id
         self.seed = seed
         self.graph = nx.Graph()
@@ -40,13 +41,16 @@ class EnterpriseNetwork:
     def add_host(self, host: Host) -> None:
         if host.host_id in self.graph:
             raise ValueError(f"Host already exists: {host.host_id}")
+
         self.graph.add_node(host.host_id, host=host)
 
     def connect(self, source: str, target: str) -> None:
         self._require_host(source)
         self._require_host(target)
+
         if source == target:
             raise ValueError("Self-connections are not allowed")
+
         self.graph.add_edge(source, target)
 
     def host(self, host_id: str) -> Host:
@@ -72,45 +76,97 @@ def build_reference_network(
 ) -> EnterpriseNetwork:
     """Build the initial six-host AEGIS reference network.
 
-    Topology: internet -- web01 -- app01 -- db01 -- critical01,
-    with app01 also connected to work01.
+    Topology:
+
+        internet -- web01 -- app01 -- db01 -- critical01
+                              |
+                            work01
+
+    Vulnerability privilege requirements are deliberately synthetic.
+    They exist to make privilege causally affect the simulated attack path.
     """
-    network = EnterpriseNetwork(configuration_id=configuration_id, seed=seed)
-    network.add_host(Host("internet", "external_entry"))
+
+    network = EnterpriseNetwork(
+        configuration_id=configuration_id,
+        seed=seed,
+    )
+
+    network.add_host(
+        Host(
+            "internet",
+            "external_entry",
+        )
+    )
+
     network.add_host(
         Host(
             "web01",
             "web_server",
-            vulnerabilities=[Vulnerability("SYNTH_WEB_01")],
+            vulnerabilities=[
+                Vulnerability(
+                    "SYNTH_WEB_01",
+                    required_privilege="none",
+                )
+            ],
             privileges=("none", "web_service"),
         )
     )
+
     network.add_host(
         Host(
             "app01",
             "application_server",
-            vulnerabilities=[Vulnerability("SYNTH_APP_01")],
+            vulnerabilities=[
+                Vulnerability(
+                    "SYNTH_APP_01",
+                    required_privilege="user",
+                )
+            ],
             privileges=("none", "app_service"),
         )
     )
+
     network.add_host(
         Host(
             "work01",
             "workstation",
-            vulnerabilities=[Vulnerability("SYNTH_WORK_01")],
+            vulnerabilities=[
+                Vulnerability(
+                    "SYNTH_WORK_01",
+                    required_privilege="none",
+                )
+            ],
             privileges=("none", "user"),
         )
     )
+
     network.add_host(
         Host(
             "db01",
             "database_server",
-            vulnerabilities=[Vulnerability("SYNTH_DB_01")],
+            vulnerabilities=[
+                Vulnerability(
+                    "SYNTH_DB_01",
+                    required_privilege="admin",
+                )
+            ],
             privileges=("none", "database_user"),
         )
     )
+
     network.add_host(
-        Host("critical01", "critical_asset", critical=True, privileges=("restricted",))
+        Host(
+            "critical01",
+            "critical_asset",
+            critical=True,
+            vulnerabilities=[
+                Vulnerability(
+                    "SYNTH_CRITICAL_01",
+                    required_privilege="admin",
+                )
+            ],
+            privileges=("restricted",),
+        )
     )
 
     network.connect("internet", "web01")
@@ -118,4 +174,5 @@ def build_reference_network(
     network.connect("app01", "work01")
     network.connect("app01", "db01")
     network.connect("db01", "critical01")
+
     return network
