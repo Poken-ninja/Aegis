@@ -192,3 +192,56 @@ The cross-check of documentation, implementation, and tests identified several s
 These changes are engineering/model corrections. They are not learning results and do not support any claim about agent performance or generalization.
 
 The simulator is now closer to a clean experimental instrument, but RL remains deferred until the Phase-2 observation/action interface is specified and tested.
+## Phase-2 methodology lock — 2026-09-24
+
+The project methodology was reviewed before RL planning. The following decisions are now locked for Phase 2 unless new evidence requires an explicit decision change.
+
+### Primary learning regime
+
+- The main experiment will use controlled learning rather than simultaneous Red/Blue co-adaptation.
+- Network-configuration diversity remains the principal experimental variable.
+- Opponent behavior and training conditions must be explicitly controlled and documented.
+
+### Simultaneous learning extension
+
+- Simultaneous Red/Blue learning is retained as an optional extension.
+- It will only be attempted after the core fixed-vs-diverse experiment succeeds.
+- It will be treated as a separate experiment because co-adaptation introduces non-stationarity and makes attribution harder.
+- If time becomes constrained, the extension is removed rather than allowed to threaten the core experiment.
+
+### Training and stopping
+
+- An individual episode ends at RED_WIN, BLUE_WIN, or TIMEOUT.
+- Training has a separate finite stopping condition: an explicit training budget.
+- The primary budget will be measured in environment actions unless later methodology work establishes a better unit.
+- Fixed-training and diverse-training conditions will receive equal primary training budgets.
+- The exact numeric budget is intentionally not fixed yet; it will be selected after baseline/RL throughput measurements and documented before the main experiment.
+
+### Evaluation and leakage control
+
+- Policies are frozen before evaluation.
+- Training, familiar-evaluation, and unseen-evaluation configuration splits will be frozen before the main training runs.
+- Evaluation must not continue updating the evaluated policy.
+- Unseen test configurations must not influence checkpoint selection.
+
+### Unseen configurations
+
+- The project distinguishes unseen instances from unseen configuration/topology families.
+- Instance-level novelty is the primary generalization test.
+- Family-level novelty is a stronger secondary test if feasible within the 8-week schedule.
+
+### Network variation
+
+- Configurations may vary across multiple recorded cybersecurity-relevant dimensions, such as topology/connectivity, host roles, vulnerability placement, privilege requirements, segmentation, and critical-asset placement.
+- Variation will be bounded and documented rather than unlimited.
+- Every generated configuration must preserve its configuration ID/seed and actual parameter description.
+
+### Opponent control
+
+- Reported Red and Blue results must specify the evaluation opponent.
+- Opponent strength must not change silently between compared conditions.
+- Fixed, heuristic, learned, or paired opponents may be used only with an explicit evaluation protocol.
+
+### Methodological interpretation
+
+These are experiment-design decisions, not learning results. No claim about generalization, agent strength, or performance follows from the decisions themselves.
