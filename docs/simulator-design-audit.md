@@ -22,9 +22,9 @@ Both are evaluated on familiar and previously unseen configurations.
 Primary metrics:
 
 - Red attack success rate
-- Red steps/time to objective
+- Red action steps to objective
 - Blue defense success rate
-- Blue detection time
+- Blue detection time in environment actions
 - Familiar-versus-unseen performance
 - Generalization gap
 
@@ -297,11 +297,13 @@ The planned abstract Blue actions are:
 - ISOLATE
 - REMEDIATE
 
-The initial implementation has only minimal Blue mechanics.
+The Phase-1 implementation has only minimal Blue mechanics.
 
-More detailed Blue behavior is deliberately deferred until the core simulator is stable. The project will not add a large incident-response system merely for realism.
+For V1, BLUE_WIN is deliberately defined as successful containment: Blue must detect and isolate Red's current non-critical host.
 
-The eventual Blue model must make defensive actions causally affect Red's ability to progress.
+MONITOR is currently a no-op placeholder. DETECT is a low-level state-transition primitive that marks an already-compromised host as detected. These mechanics are sufficient for deterministic simulator testing but are not yet the final autonomous Blue observation/action interface.
+
+Before RL, the project must define a separate Blue observation layer that does not expose the hidden compromised_hosts state directly.
 
 ## Partial observability
 
@@ -319,17 +321,24 @@ The simulator alternates:
 
 RED → BLUE → RED → BLUE ...
 
-`step_count` represents completed Red/Blue rounds rather than counting every individual action.
+One environment step is one successful agent action.
 
-This must be documented and kept consistent when calculating time-to-objective metrics.
+Therefore:
+
+- `step_count` counts individual successful agent actions;
+- `max_steps` is an action budget;
+- time-to-objective and detection-time metrics can use `step_count` directly;
+- a terminal action is included in the count that produced the terminal outcome.
 
 ## Invalid actions versus simulator errors
 
 An invalid agent action is rejected as invalid input.
 
-A simulator/configuration failure is an ERROR.
+A simulator/configuration failure raises a simulator exception.
 
-These must not be mixed with Red or Blue performance outcomes.
+Neither is an episode outcome, and neither is counted as Red or Blue performance.
+
+The Outcome enum therefore contains only IN_PROGRESS, RED_WIN, BLUE_WIN, and TIMEOUT.
 
 For example, an invalid target should not be counted as a Red loss.
 
@@ -337,7 +346,11 @@ For example, an invalid target should not be counted as a Red loss.
 
 The minimum reproducibility target is:
 
-Same network configuration + same episode seed + same action sequence = identical simulator trajectory.
+Same network configuration + same episode seed + same successful action sequence = identical simulator trajectory.
+
+AegisEnvironment.action_history records the successful action sequence for the current episode and is cleared on reset.
+
+The network owns configuration identity/seed; the environment seed is the episode seed. The fixed reference network does not use the episode seed to change its topology.
 
 Trajectory reproducibility is stronger than matching only a final outcome.
 
@@ -441,19 +454,23 @@ The detailed historical record is maintained in `docs/decisions.md` and `docs/ex
 
 ## Current Phase 1 status
 
-The simulator currently passes the complete 60-test suite and has passed the deliberate-break validation.
+Phase 1 simulator semantics have now been reconciled with the implementation.
 
-However, Phase 1 is **not yet accepted**.
+Current accepted properties:
 
-Remaining Phase 1 work:
+1. reference network topology and critical-asset assumptions are tested;
+2. Red discovery, movement, exploitation, escalation, and privilege gating are tested;
+3. Blue detection, isolation, and remediation primitives are tested;
+4. RED_WIN, BLUE_WIN, and TIMEOUT are distinct;
+5. simulator errors are exceptions, not episode outcomes;
+6. step_count counts individual successful agent actions;
+7. successful action history is recorded for reproducibility;
+8. deliberate-break validation has demonstrated that a meaningful movement invariant is test-protected;
+9. documentation records the remaining Phase-2 observation decision.
 
-1. implement and test the minimum Blue defensive mechanics required for a meaningful BLUE_WIN;
-2. add complete Red/Blue scenario or integration tests;
-3. reconcile final implementation with documentation;
-4. perform the final simulator acceptance review;
-5. document limitations and reproducibility instructions.
+Before RL, one major design boundary remains intentionally deferred rather than unresolved: the autonomous Red/Blue observation interface. That interface must be specified and tested before learning begins.
 
-No RL, PPO, MARL, DGX training, network-generalization experiment, or performance result should be introduced until these acceptance criteria are satisfied.
+No RL, PPO, MARL, DGX training, network-generalization experiment, or performance result should be introduced until the observation/action interface is finalized and the simulator acceptance tests remain green.
 
 ## Scope-control rule
 
