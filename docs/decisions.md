@@ -423,3 +423,10 @@ The following decisions are intentionally not all resolved during Phase 1. They 
 25. Additional agent memory or advanced policy architectures.
 
 These backlog items are methodological controls, not feature requests. If an item does not materially affect the frozen research question, it should be simplified rather than expanded.
+## Additional Phase-2 methodology decisions
+
+22. **Opponent-training regime:** decide whether Red and Blue learn simultaneously, alternate training, or train against fixed/random/heuristic opponents. This affects whether observed generalization is attributable to network diversity or opponent co-adaptation.
+23. **Evaluation opponent protocol:** specify which Red policy is used when evaluating Blue and which Blue policy is used when evaluating Red, including whether evaluation is symmetric or uses independently trained counterparts.
+24. **Policy checkpoint pairing:** define whether Red and Blue checkpoints are paired by training iteration, independently selected, or evaluated against a fixed baseline opponent.
+25. **Reward-information leakage:** ensure reward signals used during training do not reveal hidden network configuration or terminal information unavailable to the agent through its observation.
+26. **Variable-size network interface:** determine whether V1 supports a fixed maximum number of hosts with masking/padding or a graph-native representation. The choice must permit evaluation on unseen configurations without changing the learned action/observation interface.
