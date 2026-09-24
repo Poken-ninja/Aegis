@@ -171,3 +171,24 @@ The simulator currently passes its 60-test suite, including a successful deliber
 No learning performance, generalization result, attack success rate, or defense success rate will be reported until the corresponding experiment has actually been executed.
 
 Failed tests and negative results will be retained as part of the research record.
+
+## Simulator semantic reconciliation — 2026-09-24
+
+The cross-check of documentation, implementation, and tests identified several semantic issues that needed explicit resolution before RL.
+
+### Corrections
+
+1. **Episode outcomes:** simulator/configuration errors are now exceptions rather than an Outcome.ERROR state. Experimental outcomes are limited to IN_PROGRESS, RED_WIN, BLUE_WIN, and TIMEOUT.
+2. **Step semantics:** one environment step is one successful agent action. step_count now counts individual successful actions, making time-to-objective and detection-time metrics unambiguous.
+3. **Trajectory reproducibility:** the environment now records successful actions in action_history; invalid actions are not recorded.
+4. **Blue victory:** V1 BLUE_WIN is explicitly containment of Red's current non-critical host. It is not a general claim that all prevention or remediation produces victory.
+5. **Host privilege metadata:** unused static host privilege metadata was removed. Dynamic Red privilege is represented by the cyber state.
+6. **Observation boundary:** the current Blue DETECT primitive remains a Phase-1 state transition. Before RL, Blue must receive an explicit observation model that does not expose hidden compromise state directly.
+7. **Experiment hypotheses:** H1 and H2 were added to the research question document.
+8. **Experimental controls:** the decision log now requires matched evaluation seeds where practical, equal training budgets, identical algorithm/hyperparameters, and explicit configuration IDs/seeds.
+
+### Research interpretation
+
+These changes are engineering/model corrections. They are not learning results and do not support any claim about agent performance or generalization.
+
+The simulator is now closer to a clean experimental instrument, but RL remains deferred until the Phase-2 observation/action interface is specified and tested.
