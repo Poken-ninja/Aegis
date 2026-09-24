@@ -128,7 +128,7 @@ The simulator distinguishes several concepts that must not be conflated:
 - discovered_hosts: Red knows the host exists;
 - red_position: where Red currently is;
 - compromised_hosts: hosts Red has successfully compromised;
-- host_privileges: Red's current synthetic privilege level on a host;
+- host_privileges: where Red acquired synthetic privilege during the episode;
 - detected_hosts: hosts/events known to Blue;
 - isolated_hosts: hosts currently contained by Blue;
 - remediated_vulnerabilities: vulnerabilities disabled by Blue.
@@ -138,6 +138,16 @@ Discovery is therefore not equivalent to compromise.
 Position is not equivalent to control.
 
 Privilege is not equivalent to simply being present on a host.
+
+### V1 privilege capability abstraction
+
+The V1 simulator uses:
+
+NONE → USER → ADMIN
+
+`host_privileges` records the host where the privilege was acquired. For exploitation checks, V1 treats Red as retaining the highest acquired privilege as an attacker capability across the episode.
+
+This is deliberately simpler than modeling real credential/session semantics. It exists to make privilege causally affect attack paths without adding unnecessary complexity.
 
 ## Red action model
 
@@ -158,7 +168,7 @@ Movement changes Red's position.
 
 Exploitation attempts to obtain control.
 
-Escalation changes Red's synthetic privilege level.
+Escalation changes Red's synthetic privilege capability.
 
 ## Important design correction: movement requires a foothold
 
@@ -182,15 +192,13 @@ The simulator contains synthetic privilege levels:
 
 NONE → USER → ADMIN
 
-The vulnerability attribute required_privilege must affect whether Red can exploit a vulnerability.
+The vulnerability attribute `required_privilege` affects whether Red can exploit a vulnerability.
 
-It cannot be a decorative field that is always none.
+It cannot be a decorative field.
 
-The intended model is that different synthetic vulnerabilities can require different privilege levels. For example, a vulnerability may require no privilege, user privilege, or administrative privilege.
+The current reference configuration uses meaningful privilege requirements so that attack paths depend on acquired capability.
 
-These are simulator parameters, not claims about real vulnerabilities.
-
-The simulator must test:
+The simulator tests:
 
 - NONE can exploit NONE-required vulnerabilities;
 - NONE cannot exploit USER-required vulnerabilities;
@@ -198,21 +206,60 @@ The simulator must test:
 - USER cannot exploit ADMIN-required vulnerabilities;
 - ADMIN can exploit ADMIN-required vulnerabilities.
 
+These are simulator parameters, not claims about real vulnerabilities.
+
 ## Exploitation and escalation randomness
 
 Exploit and escalation outcomes are stochastic simulator events.
 
-The environment uses a seeded random number generator so that stochastic trajectories can be reproduced.
+The environment uses a seeded random number generator so stochastic trajectories can be reproduced.
 
 The current implementation uses explicit probabilities as engineering parameters. These values are not intended to represent empirical real-world probabilities.
 
-Later experiments must record:
+During development, seed assumptions were explicitly checked after test failures exposed incorrect expectations about Python's random-number sequence.
+
+Relevant values used to reason about deterministic tests included:
+
+- seed 0 first value approximately 0.8444;
+- seed 1 first approximately 0.1344 and second approximately 0.8474;
+- seed 2 first approximately 0.9560;
+- seed 3 first three approximately 0.2380, 0.5442, 0.3700.
+
+These values were used to choose deterministic test cases; they are not experimental findings.
+
+## Configuration randomness versus episode randomness
+
+This distinction is important for the future generalization experiment.
+
+### Configuration randomness
+
+Configuration randomness is used to construct a synthetic network configuration. It determines properties of the network that are part of the independent research variable.
+
+Each configuration should have:
+
+- a configuration ID;
+- a configuration seed;
+- reproducible network-generation parameters.
+
+### Episode randomness
+
+Episode randomness controls stochastic events within a particular network configuration, such as exploit and escalation outcomes.
+
+Each episode should record:
 
 - configuration ID;
 - configuration seed;
 - episode seed;
 - action sequence;
 - relevant simulator parameters.
+
+### Research implication
+
+Configuration randomness and episode randomness must not be conflated.
+
+If the research variable is network configuration, differences between fixed and diverse training should be attributable to the intended configuration distribution rather than an uncontrolled mixture of network-generation and episode randomness.
+
+This separation will be implemented more fully when network variation is introduced in the generalization phase.
 
 ## Critical asset victory condition
 
@@ -258,7 +305,7 @@ The eventual Blue model must make defensive actions causally affect Red's abilit
 
 ## Partial observability
 
-discovered_hosts is retained as an explicit state variable.
+`discovered_hosts` is retained as an explicit state variable.
 
 Red should not automatically receive complete knowledge of the network.
 
@@ -272,7 +319,7 @@ The simulator alternates:
 
 RED → BLUE → RED → BLUE ...
 
-step_count represents completed Red/Blue rounds rather than counting every individual action.
+`step_count` represents completed Red/Blue rounds rather than counting every individual action.
 
 This must be documented and kept consistent when calculating time-to-objective metrics.
 
@@ -292,20 +339,24 @@ The minimum reproducibility target is:
 
 Same network configuration + same episode seed + same action sequence = identical simulator trajectory.
 
-The project already uses configuration IDs and seeded randomness.
+Trajectory reproducibility is stronger than matching only a final outcome.
 
-A later refinement should clearly separate:
+The current test suite compares relevant intermediate state, including:
 
-- randomness used to construct a network configuration;
-- randomness used for stochastic episode outcomes.
+- Red position;
+- discovered hosts;
+- compromised hosts;
+- acquired privileges;
+- step count;
+- outcome.
 
-This separation is important for generalization experiments because the network configuration itself is the research variable.
+The future configuration-generation system must separately record configuration randomness from episode randomness.
 
 ## Testing strategy
 
 The simulator must be tested independently of RL.
 
-Required categories include:
+Current categories include:
 
 - network construction;
 - host and edge validation;
@@ -318,23 +369,44 @@ Required categories include:
 - privilege requirements;
 - escalation;
 - critical compromise;
-- Blue containment;
 - timeout;
 - invalid actions;
-- reproducibility;
-- configuration validity.
+- reproducibility.
+
+Blue containment and complete Red/Blue scenario coverage remain future Phase 1 work because the Blue mechanics are intentionally minimal.
 
 Integration/scenario tests are required before RL is introduced.
 
-## Deliberate break/debug requirement
+## Deliberate break/debug validation
 
-The simulator will not be considered trustworthy simply because its tests pass once.
+The simulator was intentionally broken after the expanded test suite reached 60 passing tests.
 
-At least one controlled defect or intentionally broken rule should be introduced, observed through a failing test, diagnosed, repaired, and documented.
+The internal movement foothold rule was changed so movement was always allowed.
 
-This demonstrates that the test suite can detect an actual model regression.
+Observed result:
 
-## Current implementation checkpoint
+- 59 passed;
+- 1 failed.
+
+The failing test was:
+
+`test_red_cannot_move_internally_without_compromised_foothold`
+
+Pytest reported that the expected `ValueError` was not raised.
+
+The original rule was restored:
+
+`return current_position in self.state.compromised_hosts`
+
+The full suite then returned to:
+
+- 60 passed.
+
+This demonstrates that the test suite can detect a meaningful cybersecurity-model regression.
+
+This is an engineering validation result, not an RL or generalization result.
+
+## Historical implementation checkpoint: ESCALATE
 
 During development, ESCALATE was added to the Red action model.
 
@@ -346,32 +418,42 @@ The first test run after adding it produced:
 
 The failures were caused by incorrect assumptions about Python random-number sequences in the test seeds.
 
-The seed behavior was then checked explicitly.
+The seed behavior was then checked explicitly, the test assumptions were corrected, and later execution produced the current 60-test passing checkpoint.
 
-Relevant Python random values include:
+The failure history is retained because it records how deterministic test assumptions were debugged rather than silently rewritten.
 
-- seed 0 first value approximately 0.8444;
-- seed 1 first approximately 0.1344 and second approximately 0.8474;
-- seed 2 first approximately 0.9560;
-- seed 3 first three approximately 0.2380, 0.5442, 0.3700.
+## Decision evolution summary
 
-This supports using seed 3 for successful exploit/escalation progression and seed 1 for successful exploit followed by failed escalation under the current probabilities.
+The main simulator design evolved through several evidence-driven corrections:
 
-The corrected test file was prepared, but the final 52-test result must not be recorded as passing until it is actually executed and reported.
+1. **Discovery → movement** was revised so discovery does not automatically grant internal movement.
+2. **Privilege metadata → causal privilege** was revised so required privilege actually gates exploitation.
+3. **Local privilege record → attacker capability** was clarified so V1 retains highest acquired privilege without implementing complex credential/session mechanics.
+4. **Reach critical → critical compromise** was revised so Red victory requires actual critical compromise.
+5. **Timeout → Blue victory** was separated so timeout is not falsely interpreted as defensive success.
+6. **Single informal seed → separated randomness** was revised so configuration and episode randomness are distinct concepts.
+7. **Final-state reproducibility → trajectory reproducibility** was strengthened to compare intermediate state transitions.
+8. **Green tests → deliberate test validation** was strengthened through an intentional simulator break.
+9. **Failed tests as noise → failed tests as evidence** was adopted so debugging history remains part of the research record.
+10. **Start RL early → simulator acceptance first** was reinforced after the model audit exposed semantic issues.
 
-## Current known design gaps
+The detailed historical record is maintained in `docs/decisions.md` and `docs/experiment-log.md`.
 
-Before Phase 1 can be accepted, the following must still be reconciled:
+## Current Phase 1 status
 
-1. privilege requirements must be assigned meaningfully to synthetic vulnerabilities;
-2. movement must enforce the compromised-foothold rule;
-3. Red victory must require critical compromise;
-4. minimal Blue mechanics must be implemented;
-5. scenario/integration tests must cover complete attack/defense paths;
-6. reproducibility must be tested at trajectory level;
-7. configuration and episode randomness should be separated cleanly;
-8. the simulator must undergo deliberate break/debug validation;
-9. decisions and limitations must remain synchronized with implementation.
+The simulator currently passes the complete 60-test suite and has passed the deliberate-break validation.
+
+However, Phase 1 is **not yet accepted**.
+
+Remaining Phase 1 work:
+
+1. implement and test the minimum Blue defensive mechanics required for a meaningful BLUE_WIN;
+2. add complete Red/Blue scenario or integration tests;
+3. reconcile final implementation with documentation;
+4. perform the final simulator acceptance review;
+5. document limitations and reproducibility instructions.
+
+No RL, PPO, MARL, DGX training, network-generalization experiment, or performance result should be introduced until these acceptance criteria are satisfied.
 
 ## Scope-control rule
 
