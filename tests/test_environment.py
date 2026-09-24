@@ -1016,3 +1016,32 @@ def test_red_win_takes_precedence_over_blue_containment():
     )
 
     assert env.state.outcome is Outcome.RED_WIN
+
+def test_network_without_critical_host_raises_simulator_error() -> None:
+    environment = AegisEnvironment(seed=42)
+    environment.reset()
+    environment.network.host("critical01").critical = False
+
+    with pytest.raises(RuntimeError, match="exactly one critical host"):
+        environment.step(
+            Action(
+                agent=Agent.RED,
+                action_type=ActionType.DISCOVER,
+                target="web01",
+            )
+        )
+
+
+def test_network_with_multiple_critical_hosts_raises_simulator_error() -> None:
+    environment = AegisEnvironment(seed=42)
+    environment.reset()
+    environment.network.host("web01").critical = True
+
+    with pytest.raises(RuntimeError, match="exactly one critical host"):
+        environment.step(
+            Action(
+                agent=Agent.RED,
+                action_type=ActionType.DISCOVER,
+                target="web01",
+            )
+        )
