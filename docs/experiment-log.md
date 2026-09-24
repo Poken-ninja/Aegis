@@ -84,11 +84,87 @@ A broader review then identified several issues that must be corrected before Ph
 
 These are design corrections, not experimental results.
 
+### Test-suite expansion after model audit
+
+The simulator tests were then extended to protect the revised cybersecurity model.
+
+The added validation covers:
+
+- the Internet → Web initial-entry exception;
+- the requirement for a compromised foothold before internal movement;
+- privilege-gated exploitation;
+- cross-host attacker privilege capability;
+- critical-asset compromise as the Red victory condition.
+
+The resulting complete test suite contains 60 tests.
+
+### Deliberate-break validation
+
+#### Purpose
+
+Validate that the automated tests detect a meaningful violation of the cybersecurity model rather than merely passing under the current implementation.
+
+#### Baseline
+
+Before deliberately breaking the simulator:
+
+- Test suite: 60 passed.
+
+#### Deliberate fault
+
+The internal movement rule was intentionally changed so that movement was always permitted:
+
+`return True`
+
+This removed the requirement that Red have a compromised foothold before moving internally.
+
+#### Expected behavior
+
+The simulator model requires:
+
+- Discovery does not imply compromise.
+- Red may make the initial Internet → Web entry.
+- Subsequent internal movement requires the current Red position to be compromised.
+
+#### Observed result
+
+After introducing the deliberate fault:
+
+`59 passed, 1 failed`
+
+The failing test was:
+
+`test_red_cannot_move_internally_without_compromised_foothold`
+
+Pytest reported:
+
+`Failed: DID NOT RAISE <class 'ValueError'>`
+
+This demonstrated that the test suite detected the intentional violation of the internal-movement foothold rule.
+
+#### Restoration
+
+The original movement rule was restored:
+
+`return current_position in self.state.compromised_hosts`
+
+The complete test suite then returned to:
+
+`60 passed`
+
+The final runtime varied slightly between runs (approximately 0.20–0.25 seconds); this variation is not treated as a research result.
+
+#### Interpretation
+
+The deliberate-break exercise provides evidence that the automated tests protect an important simulator invariant: network discovery alone does not grant Red the ability to move laterally through the simulated enterprise network.
+
+This is a simulator validation result, not an experimental result about reinforcement learning or agent performance.
+
 ### Current status
 
 Phase 1 is not yet accepted.
 
-The next engineering work is to reconcile the network model, cyber state, environment rules, tests, and decision documentation before adding RL.
+The simulator currently passes its 60-test suite, including a successful deliberate-break validation. Remaining Phase 1 work is to complete the simulator acceptance review, reconcile documentation with the final implementation, and confirm that the environment is sufficiently trustworthy before adding RL.
 
 ### Rule for reporting results
 
