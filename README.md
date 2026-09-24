@@ -20,9 +20,9 @@ then evaluates both on familiar and previously unseen configurations.
 Primary measures:
 
 - Red attack success rate
-- Red steps/time to objective
+- Red action steps to objective
 - Blue defense success rate
-- Blue detection time
+- Blue detection time in environment actions
 - familiar vs. unseen performance
 - generalization gap
 
@@ -53,10 +53,24 @@ docs/
   decisions.md
 ```
 
-RL, multi-agent learning, topology variation, and held-out generalization experiments are intentionally deferred until the simulator passes its validation criteria.
+RL, multi-agent learning, topology variation, and held-out generalization experiments are intentionally deferred until the simulator semantics are accepted and the Phase-2 observation/action interface is explicitly defined.
 
 ## Development principle
 
 **Build → Test → Break → Debug → Understand → Experiment → Document**
 
 A simulator result is not accepted merely because code executes. It must have a defined cybersecurity meaning and a test that checks that meaning.
+
+
+## Current simulator semantics
+
+- One environment step is one successful Red or Blue action.
+- Red and Blue alternate turns.
+- RED_WIN requires compromise of the critical asset.
+- BLUE_WIN means successful containment of Red's current non-critical host.
+- TIMEOUT is distinct from Blue victory.
+- Simulator/configuration errors are exceptions, not experimental outcomes.
+- The environment records successful actions in action_history for reproducibility.
+- The current Blue detection primitive is not the final RL observation model.
+
+No RL result is considered valid until the observation/action interface is specified and tested.
