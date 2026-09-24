@@ -24,7 +24,6 @@ class Host:
     role: str
     critical: bool = False
     vulnerabilities: list[Vulnerability] = field(default_factory=list)
-    privileges: tuple[str, ...] = ("none",)
 
 
 class EnterpriseNetwork:
@@ -108,7 +107,6 @@ def build_reference_network(
                     required_privilege="none",
                 )
             ],
-            privileges=("none", "web_service"),
         )
     )
 
@@ -122,7 +120,6 @@ def build_reference_network(
                     required_privilege="user",
                 )
             ],
-            privileges=("none", "app_service"),
         )
     )
 
@@ -136,7 +133,6 @@ def build_reference_network(
                     required_privilege="none",
                 )
             ],
-            privileges=("none", "user"),
         )
     )
 
@@ -150,7 +146,6 @@ def build_reference_network(
                     required_privilege="admin",
                 )
             ],
-            privileges=("none", "database_user"),
         )
     )
 
@@ -165,7 +160,6 @@ def build_reference_network(
                     required_privilege="admin",
                 )
             ],
-            privileges=("restricted",),
         )
     )
 
