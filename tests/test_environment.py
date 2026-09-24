@@ -1061,9 +1061,6 @@ def test_action_history_records_successful_actions_only() -> None:
 
     assert environment.action_history == [red_action]
 
-    environment.reset()
-    assert environment.action_history == []
-
     with pytest.raises(ValueError):
         environment.step(
             Action(
@@ -1074,6 +1071,9 @@ def test_action_history_records_successful_actions_only() -> None:
         )
 
     assert environment.action_history == [red_action]
+
+    environment.reset()
+    assert environment.action_history == []
 
 
 def test_step_count_counts_individual_agent_actions() -> None:
