@@ -17,7 +17,7 @@ Internet
    Web
     |
    App
-  /   \
+  /   \\
 Work   DB
         |
      Critical
@@ -29,10 +29,9 @@ Red represents a simulated attacker.
 
 Initial action vocabulary:
 
-- SCAN
 - DISCOVER
-- EXPLOIT
 - MOVE
+- EXPLOIT
 - ESCALATE
 
 These are simulator state transitions. They do not execute real exploits.
@@ -45,11 +44,14 @@ Initial action vocabulary:
 
 - MONITOR
 - DETECT
-- BLOCK
 - ISOLATE
-- PATCH
+- REMEDIATE
 
 These are abstract defensive capabilities with simulator-defined consequences.
+
+**Phase-1 limitation:** `MONITOR` is currently a no-op and `DETECT` is a low-level state-transition primitive that can mark an already-compromised host as detected. This does **not** define the eventual autonomous Blue observation interface.
+
+Before RL training, Blue must receive an explicit observation model that does not expose the hidden `compromised_hosts` state directly. The observation model is a Phase 2 design requirement.
 
 ## Outcomes
 
@@ -59,27 +61,54 @@ Red compromises the critical asset.
 
 ### BLUE_WIN
 
-Blue successfully suppresses, contains, or prevents Red from reaching its objective according to explicit simulator rules.
+For V1, Blue wins only when it successfully contains Red by isolating Red's current non-critical host. This is intentionally narrower than a general claim of prevention.
 
 ### TIMEOUT
 
-The episode reaches its step limit without either win condition.
+The episode reaches its action-step limit without either win condition.
 
-### ERROR
+### Simulator error
 
-The simulator itself fails or receives an invalid operation that cannot be handled as a defined simulation event.
+Invalid actions and invalid network configurations are simulator exceptions, not experimental episode outcomes. They are not counted as Red or Blue performance.
 
-An ERROR is never counted as Red or Blue performance.
+## Cyber-state semantics
 
-## Important modeling principle
+The simulator distinguishes:
 
-The simulator must distinguish:
+- `discovered_hosts`: hosts Red has discovered;
+- `red_position`: Red's current location;
+- `compromised_hosts`: hosts Red has successfully compromised;
+- `host_privileges`: where Red acquired synthetic privilege;
+- `detected_hosts`: compromised hosts Blue has marked as detected;
+- `isolated_hosts`: hosts Blue has contained;
+- `remediated_vulnerabilities`: vulnerabilities disabled by Blue.
 
-1. network structure,
-2. cyber state,
-3. agent observations,
-4. agent actions,
-5. state transitions,
-6. episode outcomes.
+For V1, Red retains its highest acquired synthetic privilege as an attacker capability across the episode. This is a deliberate abstraction and not a model of real credential/session behavior.
 
-This separation allows us to test the cybersecurity model before adding reinforcement learning.
+## Time semantics
+
+One simulator `step` is one successful agent action. Red and Blue alternate actions.
+
+Therefore:
+
+- `step_count` counts individual successful agent actions;
+- `max_steps` is an action budget;
+- terminal metrics can use `step_count` directly without interpreting it as completed Red/Blue rounds.
+
+## Research-model boundary
+
+The simulator state is the hidden ground-truth state. Agent observations are a separate layer and must be defined before RL.
+
+This separation is important because autonomous defense research requires a distinction between:
+
+1. true network/cyber state;
+2. what an agent can observe;
+3. what an agent can act upon;
+4. the resulting state transition;
+5. the episode outcome.
+
+The V1 simulator is intentionally small enough that these concepts can be tested independently.
+
+## Safety
+
+All offensive behavior remains synthetic, non-operational, and confined to the simulator.
