@@ -48,7 +48,7 @@
 - Python version: 3.14.6
 - NetworkX version: 3.6.1
 - AEGIS installed successfully after changing the Python requirement to `>=3.13,<3.15`.
-- The Phase 1 test suite passed: 6 tests passed.
+- The Phase 1 test suite passed: 6 tests passed at the initial compatibility checkpoint.
 
 **Result:** `pyproject.toml` now declares Python `>=3.13,<3.15`.
 
@@ -121,3 +121,78 @@
 **Decision:** Before Phase 1 acceptance, intentionally introduce at least one controlled simulator defect, verify that tests detect it, then repair it and document the result.
 
 **Reason:** Passing tests once does not establish that the test suite can detect meaningful regressions.
+
+**Observed validation:** The internal movement foothold rule was intentionally removed. The test suite changed from 60 passing tests to 59 passing and 1 failing test. The failing test was `test_red_cannot_move_internally_without_compromised_foothold`. After restoring the rule, all 60 tests passed again.
+
+---
+
+# Decision Evolution Record
+
+## Why preserve superseded decisions?
+
+Research engineering is not only the final implementation. Earlier decisions capture the assumptions under which the system was originally designed. When evidence from testing, model review, or implementation shows that an assumption is inadequate, the decision should be revised without erasing the historical reasoning.
+
+AEGIS therefore records **decision evolution** rather than silently rewriting the past.
+
+A superseded decision is not necessarily a mistake. It is evidence of how the research model became more precise.
+
+## Evolution 1 — Movement permission
+
+**Initial assumption:** A discovered adjacent host could be moved to.
+
+**Evidence that changed the decision:** The cybersecurity model requires discovery, compromise, and movement to represent different concepts. Allowing discovery alone to authorize internal movement weakened the causal attack path.
+
+**Revised decision:** Internet → Web is an explicit initial-entry exception. Subsequent internal movement requires a compromised foothold.
+
+**Validation:** A dedicated test now verifies that internal movement without a compromised foothold is rejected.
+
+**Status:** Original assumption superseded by ADR-006.
+
+## Evolution 2 — Privilege requirements
+
+**Initial assumption:** Vulnerabilities carried a `required_privilege` field, but the initial vulnerability configuration did not create meaningful privilege-gated attack paths.
+
+**Evidence that changed the decision:** A privilege attribute that does not change whether exploitation is possible is decorative and does not contribute meaningful cybersecurity behavior.
+
+**Revised decision:** Synthetic vulnerabilities use different privilege requirements, including USER and ADMIN requirements, and exploitation checks Red's acquired privilege capability.
+
+**Validation:** Dedicated tests verify NONE/USER/ADMIN access against USER- and ADMIN-required vulnerabilities.
+
+**Status:** Original implementation assumption superseded by ADR-007.
+
+## Evolution 3 — Red victory condition
+
+**Initial assumption:** Red reaching the critical host was sufficient for victory.
+
+**Evidence that changed the decision:** Reaching an asset and compromising an asset represent different events. Treating them as equivalent would overstate Red's success and weaken the meaning of the critical asset.
+
+**Revised decision:** Red wins only when the critical asset is actually compromised.
+
+**Validation:** Dedicated tests verify both failed critical exploitation and successful critical exploitation.
+
+**Status:** Original victory condition superseded by ADR-008.
+
+## Evolution 4 — Test validation
+
+**Initial assumption:** A passing test suite was sufficient evidence that the simulator's current implementation was behaving as intended.
+
+**Evidence that changed the decision:** Passing tests do not demonstrate that the tests can detect meaningful regressions.
+
+**Revised decision:** Deliberately break important simulator invariants, verify that the tests fail, restore the implementation, and retain the result in the research record.
+
+**Validation:** The internal movement foothold rule was broken deliberately; 1 test failed as expected; the rule was restored; all 60 tests passed.
+
+**Status:** Original testing assumption superseded by ADR-012.
+
+## Research record principle
+
+When a future decision changes an accepted design:
+
+1. preserve the original decision and its rationale;
+2. record the evidence that motivated reconsideration;
+3. document the revised decision;
+4. identify which previous decision or assumption it supersedes;
+5. add or update tests where appropriate;
+6. record the implementation and experimental implications.
+
+This creates an auditable chain from **assumption → implementation → test/evidence → revision → validated design**.
