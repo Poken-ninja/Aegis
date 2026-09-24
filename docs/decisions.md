@@ -430,3 +430,123 @@ These backlog items are methodological controls, not feature requests. If an ite
 24. **Policy checkpoint pairing:** define whether Red and Blue checkpoints are paired by training iteration, independently selected, or evaluated against a fixed baseline opponent.
 25. **Reward-information leakage:** ensure reward signals used during training do not reveal hidden network configuration or terminal information unavailable to the agent through its observation.
 26. **Variable-size network interface:** determine whether V1 supports a fixed maximum number of hosts with masking/padding or a graph-native representation. The choice must permit evaluation on unseen configurations without changing the learned action/observation interface.
+## ADR-027 — Controlled learning is the V1 primary learning regime
+
+**Status:** Accepted for Phase 2 methodology
+
+**Decision:** The main generalization experiment will use controlled learning rather than simultaneous Red/Blue co-adaptation. The primary comparison will isolate exposure to network-configuration diversity while controlling the opponent-training regime.
+
+**Reason:** The frozen research question asks whether learned strategies generalize to previously unseen network configurations. If both agents learn simultaneously, changes in Red behavior can be caused by Blue adaptation and vice versa. That introduces opponent co-adaptation as a second major experimental variable and makes the effect of network diversity harder to interpret.
+
+**Research implication:** The core experiment should make network diversity the principal manipulated training factor. Opponent behavior must be controlled and explicitly documented.
+
+**Scope implication:** Simultaneous learning is not removed from the project; it is deferred to an extension after the core experiment succeeds.
+
+## ADR-028 — Simultaneous Red/Blue learning is an extension, not the core experiment
+
+**Status:** Accepted
+
+**Decision:** A simultaneous-learning regime, in which Red and Blue update while interacting with each other, may be evaluated only after the controlled-learning experiment is complete and validated.
+
+**Reason:** Simultaneous learning is cyber-research-relevant because it permits co-adaptation, but it introduces non-stationarity: each agent's learning target changes as the opponent policy changes. This makes causal interpretation and debugging substantially harder.
+
+**Research implication:** If performed, simultaneous learning will be reported as a separate experiment with its own training protocol, budget, checkpoints, and interpretation. It must not replace the controlled experiment or be mixed into its primary results.
+
+**Scope control:** If time runs short, this extension is dropped without changing the core research question or main experiment.
+
+## ADR-029 — Separate episode termination from training termination
+
+**Status:** Accepted
+
+**Decision:** Individual episodes terminate through the simulator's existing terminal conditions (RED_WIN, BLUE_WIN, or TIMEOUT). Training itself terminates through a separately defined, pre-registered training budget.
+
+**Reason:** A learning agent may participate in many episodes, so an episode-level stopping condition does not determine when learning stops. Separating the two prevents indefinite training and makes experimental comparisons reproducible.
+
+**Research implication:** Report both episode limits and training budgets. Do not describe an agent as finished learning merely because a fixed number of episodes has elapsed.
+
+## ADR-030 — Use an explicit training budget for fair comparisons
+
+**Status:** Accepted for Phase 2 methodology
+
+**Decision:** Fixed-training and diverse-training conditions will receive the same primary training budget, measured in environment actions unless a later methodological review establishes a better controlled unit.
+
+**Reason:** Giving one condition substantially more interaction experience would confound the effect of network diversity with the amount of learning experience.
+
+**Research implication:** The main comparison should keep algorithm, hyperparameters, training budget, evaluation protocol, and other relevant controls the same, with training exposure to network configurations as the principal difference.
+
+**Scope note:** The exact numeric budget is not yet fixed. It must be selected after baseline behavior and RL throughput are measured and recorded before the main experiment.
+
+## ADR-031 — Freeze policies before evaluation
+
+**Status:** Accepted for Phase 2 methodology
+
+**Decision:** At the end of a defined training run, the evaluated policy/checkpoint is frozen. Evaluation on familiar and unseen configurations does not continue updating the policy.
+
+**Reason:** Evaluation must measure the learned policy under held-out conditions rather than mixing evaluation with additional learning.
+
+**Research implication:** Checkpoint selection rules must be defined before the unseen evaluation is used, and unseen configurations must not influence training or checkpoint selection.
+
+## ADR-032 — Freeze configuration splits before training
+
+**Status:** Accepted for Phase 2 methodology
+
+**Decision:** Training configurations, familiar evaluation configurations, and unseen evaluation configurations will be assigned configuration IDs/seeds and frozen before the main training runs.
+
+**Reason:** Changing the held-out set after observing results would introduce test leakage and weaken the interpretation of generalization.
+
+**Research implication:** The experiment record must preserve the exact configuration split and its generation parameters.
+
+## ADR-033 — Evaluate both instance-level and family-level novelty when feasible
+
+**Status:** Accepted for experiment planning
+
+**Decision:** The project will distinguish two forms of unseen configuration: (1) an unseen instance from a known configuration family/distribution, and (2) an unseen topology/configuration family. The primary experiment should prioritize instance-level generalization; family-level generalization is an additional stronger test if the simulator and schedule support it.
+
+**Reason:** A new seed can test generalization to a new instance, but it does not necessarily test structural generalization. Family-level novelty provides a stronger test of whether learned strategies transfer beyond familiar structural patterns.
+
+**Research implication:** Results must label which novelty level is being evaluated rather than calling every new seed unseen topology.
+
+## ADR-034 — Network variation must be controlled and recorded
+
+**Status:** Accepted for experiment planning
+
+**Decision:** Network configurations may vary across multiple cybersecurity-relevant attributes, including topology/connectivity, host roles, vulnerability placement, privilege requirements, segmentation, and critical-asset placement, but each generated configuration must record the actual parameter values.
+
+**Reason:** The project wants meaningful configuration diversity, but uncontrolled variation can make difficulty differences impossible to diagnose.
+
+**Research implication:** The configuration generator and experiment metadata must preserve a configuration vector/description so performance can later be interpreted against the network properties that produced it.
+
+**Scope control:** Vary everything does not mean adding unlimited complexity. The generator will use a bounded, documented set of variation dimensions that can be tested within the 8-week project.
+
+## ADR-035 — Opponent strength must be controlled during evaluation
+
+**Status:** Accepted for experiment planning
+
+**Decision:** Red and Blue generalization results will specify the opponent policy used during evaluation. Comparisons must not change opponent strength at the same time as the network-generalization condition without explicitly treating opponent strength as an experimental variable.
+
+**Reason:** A lower Red attack-success rate could result from a stronger Blue opponent rather than better Red generalization. Likewise, higher Blue defense success could result from an easier Red opponent.
+
+**Research implication:** Evaluation protocols must define which fixed, heuristic, learned, or paired policy is used as the opponent for each reported result.
+
+## ADR-036 — Simultaneous training has a finite budget even though policies keep adapting
+
+**Status:** Accepted for extension design
+
+**Decision:** If simultaneous learning is run, Red and Blue may continue updating throughout training episodes, but the run ends at the same kind of explicit finite training budget used elsewhere. Episodes still end independently through the simulator terminal conditions.
+
+**Reason:** Co-adaptation does not require indefinite training. A fixed budget provides a reproducible stopping point even when there is no natural moment at which both agents have permanently finished learning.
+
+**Research implication:** Simultaneous-learning results must report the training budget and, where useful, checkpoint performance over training to show whether behavior is improving, unstable, or degrading.
+
+## Phase-2 methodological direction
+
+The current locked direction is therefore:
+
+1. Build the observation/action interface.
+2. Establish random and deterministic heuristic baselines.
+3. Define controlled learning against explicitly specified opponents.
+4. Train fixed-network and diverse-network conditions under equal training budgets.
+5. Freeze policies and configuration splits.
+6. Evaluate familiar and unseen configurations, distinguishing instance-level and family-level novelty.
+7. Analyze generalization gaps and failure modes.
+8. Only if the core experiment is successful, consider simultaneous Red/Blue learning as an extension.
