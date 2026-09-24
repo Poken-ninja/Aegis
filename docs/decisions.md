@@ -384,3 +384,42 @@ This creates an auditable chain from **assumption → implementation → test/ev
 **Reason:** The independent variable is training exposure to network configuration diversity. Uncontrolled differences in training budget, stochastic outcomes, or evaluation seeds would create confounds.
 
 **Research implication:** Experiment metadata must record training condition, configuration IDs/seeds, episode seeds, algorithm settings, training steps, and evaluation seeds.
+# Decision Backlog — Before Phase 2/RL
+
+The following decisions are intentionally not all resolved during Phase 1. They are listed so the project does not silently make methodological choices during implementation.
+
+## Must resolve before RL
+
+1. **Observation model:** exact Red and Blue observations; what is hidden; how monitoring/detection evidence is generated.
+2. **Action-space encoding:** how host-target actions map to a fixed action space when network configurations vary.
+3. **Reward design:** separate Red and Blue rewards, terminal rewards, step costs, and whether reward shaping is allowed.
+4. **Agent-learning setup:** independent policies, centralized training/decentralized execution, or another minimal MARL formulation.
+5. **Interaction timing:** retain alternating Red→Blue turns or move to simultaneous actions. V1 currently uses alternating turns.
+6. **Network variation dimensions:** topology, vulnerability placement, privilege requirements, host roles, or a controlled subset.
+7. **Held-out definition:** instance-level unseen configurations versus unseen topology/configuration families.
+8. **Training/evaluation split:** exact configuration IDs assigned to training, familiar evaluation, and unseen evaluation before training.
+9. **Baseline agents:** random and deterministic heuristic baselines for Red and Blue before RL.
+10. **RL algorithm/framework:** select only after the observation/action interface and baseline behavior are stable; PPO remains a candidate, not a commitment.
+
+## Must resolve before the main experiment
+
+11. **Training budget:** equal environment-action budget, episode budget, or another controlled unit.
+12. **Evaluation protocol:** number of episodes per configuration and matched episode seeds where practical.
+13. **Random seeds/replicates:** how many independent training seeds are used and how they are aggregated.
+14. **Checkpoint selection:** how the evaluated model checkpoint is selected without leaking unseen-test performance into training decisions.
+15. **Statistical analysis:** uncertainty reporting, aggregation across seeds/configurations, and appropriate comparisons.
+16. **Generalization-gap formula:** metric-specific calculation and sign convention.
+17. **Failure accounting:** how invalid actions, simulator exceptions, timeouts, and wins are reported without contaminating performance denominators.
+18. **Compute budget:** when DGX Spark is used, how many training runs/parallel environments are justified, and what remains reproducible on CPU.
+19. **Experiment artifact format:** exact files containing run metadata, configuration IDs/seeds, episode seeds, actions/trajectories, model checkpoints, metrics, and environment version.
+20. **Reproducibility target:** exact software versions and configuration needed to reproduce reported tables/figures.
+
+## Explicitly deferred unless the core experiment succeeds
+
+21. Adversarial red→blue→red adaptation/self-play.
+22. Richer incident-response mechanics.
+23. Complex network generators.
+24. Large-scale distributed training.
+25. Additional agent memory or advanced policy architectures.
+
+These backlog items are methodological controls, not feature requests. If an item does not materially affect the frozen research question, it should be simplified rather than expanded.
