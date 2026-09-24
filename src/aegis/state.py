@@ -7,13 +7,12 @@ from enum import Enum
 
 
 class Outcome(str, Enum):
-    """Possible terminal outcomes of a simulation episode."""
+    """Terminal outcomes of a simulation episode."""
 
     IN_PROGRESS = "in_progress"
     RED_WIN = "red_win"
     BLUE_WIN = "blue_win"
     TIMEOUT = "timeout"
-    ERROR = "error"
 
 
 class PrivilegeLevel(str, Enum):
