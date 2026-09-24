@@ -48,7 +48,7 @@
 - Python version: 3.14.6
 - NetworkX version: 3.6.1
 - AEGIS installed successfully after changing the Python requirement to `>=3.13,<3.15`.
-- The Phase 1 test suite passed: 6 tests passed at the initial compatibility checkpoint.
+- The initial compatibility checkpoint passed: 6 tests passed.
 
 **Result:** `pyproject.toml` now declares Python `>=3.13,<3.15`.
 
@@ -60,9 +60,9 @@
 
 **Status:** Accepted
 
-**Decision:** Maintain a detailed simulator design audit and chronological engineering log in the repository.
+**Decision:** Maintain a detailed simulator design audit, architecture decision log, decision-evolution record, and chronological engineering log in the repository.
 
-**Reason:** A research project must preserve not only implementation, but also the reasoning, corrections, failed tests, assumptions, and scope decisions that produced the implementation.
+**Reason:** A research project must preserve not only implementation, but also the reasoning, corrections, failed tests, assumptions, scope decisions, and evidence that produced the implementation.
 
 **Research implication:** Future work should be understandable from the repository without relying on chat history.
 
@@ -78,9 +78,15 @@
 
 **Status:** Accepted
 
-**Decision:** Synthetic vulnerabilities must be allowed to require different privilege levels, and the simulator must enforce those requirements.
+**Decision:** Synthetic vulnerabilities use different required privilege levels, and exploitation enforces those requirements.
 
 **Reason:** A privilege field that never changes whether an action is possible is decorative rather than a cybersecurity mechanism.
+
+**V1 privilege model:** `NONE → USER → ADMIN`.
+
+**Capability interpretation:** `host_privileges` records where Red acquired a privilege during the episode. For V1, the attacker is also modeled as retaining its highest acquired privilege capability across compromised hosts. This is a deliberate abstraction that allows a privilege acquired on one compromised host to affect exploitation of another host without building a more complex credential/session model.
+
+**Scope note:** This is a synthetic simulator abstraction, not a claim about how real enterprise credentials behave.
 
 ## ADR-008 — Red victory requires critical compromise
 
@@ -102,9 +108,15 @@
 
 **Status:** Accepted for implementation planning
 
-**Decision:** Generalization experiments should distinguish randomness used to generate a network configuration from randomness used for stochastic episode outcomes.
+**Decision:** Generalization experiments must distinguish randomness used to generate a network configuration from randomness used for stochastic episode outcomes.
 
 **Reason:** Network configuration is the independent research variable. Conflating configuration generation with episode randomness would make controlled comparisons harder to interpret.
+
+**Configuration randomness:** Determines the synthetic enterprise configuration and its configuration identity/seed.
+
+**Episode randomness:** Determines stochastic outcomes within an episode, such as exploit or escalation success.
+
+**Experimental implication:** A held-out network configuration must not be accidentally recreated or altered by episode-level randomness. Experiments should record both configuration ID/seed and episode seed.
 
 ## ADR-011 — Validate trajectories, not only final outcomes
 
@@ -128,71 +140,155 @@
 
 # Decision Evolution Record
 
-## Why preserve superseded decisions?
+This section preserves how the simulator design changed as implementation and testing exposed weaknesses in earlier assumptions.
 
-Research engineering is not only the final implementation. Earlier decisions capture the assumptions under which the system was originally designed. When evidence from testing, model review, or implementation shows that an assumption is inadequate, the decision should be revised without erasing the historical reasoning.
+The purpose is not to label earlier work as failure. It is to preserve the chain of reasoning:
 
-AEGIS therefore records **decision evolution** rather than silently rewriting the past.
+**assumption → implementation → evidence → revised decision → validation**
 
-A superseded decision is not necessarily a mistake. It is evidence of how the research model became more precise.
-
-## Evolution 1 — Movement permission
+## Evolution 1 — Discovery versus movement
 
 **Initial assumption:** A discovered adjacent host could be moved to.
 
-**Evidence that changed the decision:** The cybersecurity model requires discovery, compromise, and movement to represent different concepts. Allowing discovery alone to authorize internal movement weakened the causal attack path.
+**Evidence:** The model audit showed that discovery, position, compromise, and movement capability were being conflated.
 
-**Revised decision:** Internet → Web is an explicit initial-entry exception. Subsequent internal movement requires a compromised foothold.
+**Problem:** If Red can freely traverse internal hosts after discovery, compromise becomes much less meaningful as a cybersecurity state transition.
 
-**Validation:** A dedicated test now verifies that internal movement without a compromised foothold is rejected.
+**Revised decision:** Internet → Web is an explicit initial-entry exception. Subsequent internal movement requires the current Red position to be compromised and the target to be reachable/discovered.
 
-**Status:** Original assumption superseded by ADR-006.
+**Validation:** A dedicated test rejects internal movement without a compromised foothold.
 
-## Evolution 2 — Privilege requirements
+**Superseded by:** ADR-006.
 
-**Initial assumption:** Vulnerabilities carried a `required_privilege` field, but the initial vulnerability configuration did not create meaningful privilege-gated attack paths.
+## Evolution 2 — Privilege requirements become causal
 
-**Evidence that changed the decision:** A privilege attribute that does not change whether exploitation is possible is decorative and does not contribute meaningful cybersecurity behavior.
+**Initial assumption:** Vulnerabilities had a `required_privilege` field, but the initial configuration did not create sufficiently meaningful privilege-gated attack paths.
 
-**Revised decision:** Synthetic vulnerabilities use different privilege requirements, including USER and ADMIN requirements, and exploitation checks Red's acquired privilege capability.
+**Evidence:** A field that does not change action availability is decorative rather than causal.
 
-**Validation:** Dedicated tests verify NONE/USER/ADMIN access against USER- and ADMIN-required vulnerabilities.
+**Revised decision:** Synthetic vulnerabilities can require NONE, USER, or ADMIN privilege, and exploitation checks Red's acquired privilege capability.
 
-**Status:** Original implementation assumption superseded by ADR-007.
+**Validation:** Tests cover NONE versus USER-required, USER versus USER-required, USER versus ADMIN-required, and ADMIN versus ADMIN-required exploitation.
 
-## Evolution 3 — Red victory condition
+**Superseded by:** ADR-007.
 
-**Initial assumption:** Red reaching the critical host was sufficient for victory.
+## Evolution 3 — Local privilege record versus attacker capability
 
-**Evidence that changed the decision:** Reaching an asset and compromising an asset represent different events. Treating them as equivalent would overstate Red's success and weaken the meaning of the critical asset.
+**Initial implementation assumption:** `host_privileges` could be interpreted only as privilege local to the host where it was recorded.
 
-**Revised decision:** Red wins only when the critical asset is actually compromised.
+**Evidence:** The intended V1 attack path requires a privilege acquired on one compromised host to influence what Red can exploit elsewhere. Modeling credentials, sessions, and transfer mechanics would add unnecessary complexity for the research question.
 
-**Validation:** Dedicated tests verify both failed critical exploitation and successful critical exploitation.
+**Revised decision:** `host_privileges` records the acquisition location, while the current V1 attacker model retains its highest acquired privilege as a global capability for exploitation checks.
 
-**Status:** Original victory condition superseded by ADR-008.
+**Trade-off:** This intentionally abstracts away real credential/session semantics.
 
-## Evolution 4 — Test validation
+**Validation:** Tests directly assign USER or ADMIN capability on `web01` and verify its effect on exploitation of `app01` or `db01`.
 
-**Initial assumption:** A passing test suite was sufficient evidence that the simulator's current implementation was behaving as intended.
+**Status:** Accepted V1 abstraction; should be revisited only if it materially affects the generalization experiment.
 
-**Evidence that changed the decision:** Passing tests do not demonstrate that the tests can detect meaningful regressions.
+## Evolution 4 — Critical asset victory condition
 
-**Revised decision:** Deliberately break important simulator invariants, verify that the tests fail, restore the implementation, and retain the result in the research record.
+**Initial assumption:** Reaching the critical host was sufficient for Red victory.
 
-**Validation:** The internal movement foothold rule was broken deliberately; 1 test failed as expected; the rule was restored; all 60 tests passed.
+**Evidence:** Reaching an asset and compromising an asset represent different simulated events.
 
-**Status:** Original testing assumption superseded by ADR-012.
+**Problem:** The old condition could declare Red successful without a successful compromise.
+
+**Revised decision:** Red wins only when the critical asset is actually in `compromised_hosts`.
+
+**Validation:** One test verifies that reaching/attempting a failed critical exploit does not produce RED_WIN; another verifies successful critical compromise produces RED_WIN.
+
+**Superseded by:** ADR-008.
+
+## Evolution 5 — Timeout versus Blue victory
+
+**Initial assumption:** A Red timeout could be interpreted as Blue success.
+
+**Evidence:** Red failing to complete the objective does not prove that Blue detected, contained, isolated, or prevented Red.
+
+**Revised decision:** TIMEOUT and BLUE_WIN are separate outcomes. Blue victory will require an explicit defensive success condition.
+
+**Validation:** Current tests ensure timeout remains TIMEOUT rather than BLUE_WIN.
+
+**Superseded by:** ADR-009.
+
+## Evolution 6 — Randomness and reproducibility
+
+**Initial assumption:** A single seed was sufficient as an informal reproducibility mechanism.
+
+**Evidence:** The generalization experiment changes network configuration, while exploit/escalation outcomes are stochastic episode events. Mixing these sources of randomness could make it unclear whether an observed difference came from network configuration or episode randomness.
+
+**Revised decision:** Treat configuration randomness and episode randomness as separate concepts. Record configuration ID/seed and episode seed independently.
+
+**Additional evidence:** During ESCALATE testing, the first test run produced 52 collected, 49 passed, and 3 failed because the tests had incorrect assumptions about Python random-number sequences. The sequences were checked explicitly and the tests were corrected.
+
+**Validation:** Current trajectory reproducibility testing checks identical state trajectories for the same seed and action sequence. Configuration-generation randomness remains an implementation requirement for the later generalization phase.
+
+**Superseded by:** ADR-010 and ADR-011.
+
+## Evolution 7 — Validate trajectories, not only terminal outcomes
+
+**Initial assumption:** Matching final exploit success was sufficient to demonstrate deterministic behavior.
+
+**Evidence:** Two simulations could reach the same final outcome through different intermediate states.
+
+**Revised decision:** Reproducibility should compare relevant intermediate trajectory state as well as final outcome.
+
+**Validation:** The test suite now compares position, discovered hosts, compromised hosts, privileges, step count, and outcome across identical seeded action sequences.
+
+**Superseded by:** ADR-011.
+
+## Evolution 8 — Deliberately test the tests
+
+**Initial assumption:** A green test suite was sufficient evidence that the simulator was protected against regressions.
+
+**Evidence:** A test suite can pass without proving that it detects a meaningful model violation.
+
+**Revised decision:** Intentionally break an important invariant, verify a failing test, restore the implementation, and document the result.
+
+**Observed validation:**
+
+`60 passed` baseline  
+→ foothold requirement intentionally removed  
+→ `59 passed, 1 failed`  
+→ `test_red_cannot_move_internally_without_compromised_foothold` failed  
+→ rule restored  
+→ `60 passed`
+
+**Superseded by:** ADR-012.
+
+## Evolution 9 — Test failures are evidence, not noise
+
+**Initial assumption:** Early failing tests could simply be treated as obstacles to a green build.
+
+**Evidence:** The 52-test ESCALATE checkpoint exposed incorrect assumptions about the random-number sequence associated with chosen seeds.
+
+**Revised decision:** Preserve meaningful test failures in the engineering record, determine whether the failure comes from implementation, test assumptions, or model assumptions, and only then modify the appropriate artifact.
+
+**Research implication:** Negative engineering results are part of the audit trail and should not be hidden by weakening tests.
+
+## Evolution 10 — Simulator validation before learning
+
+**Initial assumption:** It would be possible to begin RL development while the simulator was still being refined.
+
+**Evidence:** The model audit identified multiple unresolved semantic issues in movement, privilege, victory, and reproducibility.
+
+**Revised decision:** No RL or GPU training results are produced until the simulator passes its acceptance criteria.
+
+**Research implication:** This protects the main experiment from measuring environment bugs instead of agent learning.
+
+**Superseded by:** ADR-002.
 
 ## Research record principle
 
 When a future decision changes an accepted design:
 
-1. preserve the original decision and its rationale;
+1. preserve the original decision and rationale;
 2. record the evidence that motivated reconsideration;
 3. document the revised decision;
 4. identify which previous decision or assumption it supersedes;
 5. add or update tests where appropriate;
-6. record the implementation and experimental implications.
+6. record implementation implications;
+7. record experimental implications and limitations.
 
 This creates an auditable chain from **assumption → implementation → test/evidence → revision → validated design**.
