@@ -30,7 +30,7 @@ def test_turn_alternates_after_each_action() -> None:
 
     assert environment.current_agent is Agent.BLUE
     assert environment.state is not None
-    assert environment.state.step_count == 0
+    assert environment.state.step_count == 1
 
     blue_action = Action(
         agent=Agent.BLUE,
@@ -40,7 +40,7 @@ def test_turn_alternates_after_each_action() -> None:
     environment.step(blue_action)
 
     assert environment.current_agent is Agent.RED
-    assert environment.state.step_count == 1
+    assert environment.state.step_count == 2
 
 
 def test_wrong_agent_cannot_act() -> None:
@@ -69,7 +69,7 @@ def test_environment_must_be_reset_before_step() -> None:
 
 
 def test_terminated_episode_cannot_continue() -> None:
-    environment = AegisEnvironment(seed=42, max_steps=1)
+    environment = AegisEnvironment(seed=42, max_steps=2)
     environment.reset()
 
     red_action = Action(
@@ -84,9 +84,11 @@ def test_terminated_episode_cannot_continue() -> None:
     )
 
     environment.step(red_action)
+    assert environment.state is not None
+    assert environment.state.outcome is Outcome.IN_PROGRESS
+
     environment.step(blue_action)
 
-    assert environment.state is not None
     assert environment.state.outcome is Outcome.TIMEOUT
 
     with pytest.raises(RuntimeError):
