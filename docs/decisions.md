@@ -323,17 +323,6 @@ This creates an auditable chain from **assumption → implementation → test/ev
 
 **Research implication:** Documentation must describe V1 Blue success as containment rather than claiming that all forms of prevention are modeled.
 
-## ADR-016 — Agent observations are separate from hidden simulator state
-
-**Status:** Accepted for Phase 2 design
-
-**Decision:** The simulator maintains ground-truth cyber state, while Red and Blue will receive explicitly defined observations before RL training begins. Blue must not receive `compromised_hosts` directly as an observation.
-
-**Reason:** Otherwise Blue could detect compromise by reading the simulator's hidden answer, making detection a bookkeeping operation rather than an autonomous decision problem.
-
-**Implementation implication:** The current `DETECT` method remains a Phase-1 state-transition primitive. A Phase-2 observation layer must provide candidate evidence/signals that allow Blue to choose detection actions without direct access to hidden compromise state.
-
-**Research implication:** Observation design is a prerequisite for meaningful Blue detection-time and defense-performance experiments.
 
 ## ADR-017 — Record successful action history in the environment
 
@@ -365,68 +354,17 @@ This creates an auditable chain from **assumption → implementation → test/ev
 
 **Research implication:** No RL result may use the current no-op `MONITOR` action as if it represented realistic monitoring.
 
-## ADR-020 — Define generalization at the configuration level
+## Phase 1 boundary — deferred Phase 2 work
 
-**Status:** Accepted for experiment design
+The Phase 1 simulator establishes the cyber-state and transition primitives needed by later learning experiments. The following are intentionally deferred to the Phase 2 branch and are not Phase 1 decisions:
 
-**Decision:** A previously unseen evaluation case must have a configuration ID/seed withheld from training. We will distinguish instance-level novelty from distribution/family novelty and report which type is tested.
+- agent observation/action interface;
+- observation information boundaries;
+- synthetic Blue telemetry;
+- fixed-versus-diverse training methodology;
+- held-out configuration splits;
+- training budgets;
+- baseline learning opponents;
+- RL algorithm/framework selection.
 
-**Reason:** A new random seed from an identical configuration family is not automatically evidence of structural generalization. The research question is about previously unseen network configurations.
-
-**Research implication:** The final experiment must specify the training configuration distribution, held-out evaluation set, and whether topology, vulnerability placement, privilege requirements, or other configuration attributes vary.
-
-## ADR-021 — Control stochastic episode randomness in fixed-vs-diverse comparisons
-
-**Status:** Accepted for experiment design
-
-**Decision:** Fixed-training and diverse-training conditions will use matched evaluation episode seeds where practical, identical algorithm/hyperparameters, equal training-step budgets, and the same evaluation protocol.
-
-**Reason:** The independent variable is training exposure to network configuration diversity. Uncontrolled differences in training budget, stochastic outcomes, or evaluation seeds would create confounds.
-
-**Research implication:** Experiment metadata must record training condition, configuration IDs/seeds, episode seeds, algorithm settings, training steps, and evaluation seeds.
-# Decision Backlog — Before Phase 2/RL
-
-The following decisions are intentionally not all resolved during Phase 1. They are listed so the project does not silently make methodological choices during implementation.
-
-## Must resolve before RL
-
-1. **Observation model:** exact Red and Blue observations; what is hidden; how monitoring/detection evidence is generated.
-2. **Action-space encoding:** how host-target actions map to a fixed action space when network configurations vary.
-3. **Reward design:** separate Red and Blue rewards, terminal rewards, step costs, and whether reward shaping is allowed.
-4. **Agent-learning setup:** independent policies, centralized training/decentralized execution, or another minimal MARL formulation.
-5. **Interaction timing:** retain alternating Red→Blue turns or move to simultaneous actions. V1 currently uses alternating turns.
-6. **Network variation dimensions:** topology, vulnerability placement, privilege requirements, host roles, or a controlled subset.
-7. **Held-out definition:** instance-level unseen configurations versus unseen topology/configuration families.
-8. **Training/evaluation split:** exact configuration IDs assigned to training, familiar evaluation, and unseen evaluation before training.
-9. **Baseline agents:** random and deterministic heuristic baselines for Red and Blue before RL.
-10. **RL algorithm/framework:** select only after the observation/action interface and baseline behavior are stable; PPO remains a candidate, not a commitment.
-
-## Must resolve before the main experiment
-
-11. **Training budget:** equal environment-action budget, episode budget, or another controlled unit.
-12. **Evaluation protocol:** number of episodes per configuration and matched episode seeds where practical.
-13. **Random seeds/replicates:** how many independent training seeds are used and how they are aggregated.
-14. **Checkpoint selection:** how the evaluated model checkpoint is selected without leaking unseen-test performance into training decisions.
-15. **Statistical analysis:** uncertainty reporting, aggregation across seeds/configurations, and appropriate comparisons.
-16. **Generalization-gap formula:** metric-specific calculation and sign convention.
-17. **Failure accounting:** how invalid actions, simulator exceptions, timeouts, and wins are reported without contaminating performance denominators.
-18. **Compute budget:** when DGX Spark is used, how many training runs/parallel environments are justified, and what remains reproducible on CPU.
-19. **Experiment artifact format:** exact files containing run metadata, configuration IDs/seeds, episode seeds, actions/trajectories, model checkpoints, metrics, and environment version.
-20. **Reproducibility target:** exact software versions and configuration needed to reproduce reported tables/figures.
-
-## Explicitly deferred unless the core experiment succeeds
-
-21. Adversarial red→blue→red adaptation/self-play.
-22. Richer incident-response mechanics.
-23. Complex network generators.
-24. Large-scale distributed training.
-25. Additional agent memory or advanced policy architectures.
-
-These backlog items are methodological controls, not feature requests. If an item does not materially affect the frozen research question, it should be simplified rather than expanded.
-## Additional Phase-2 methodology decisions
-
-22. **Opponent-training regime:** decide whether Red and Blue learn simultaneously, alternate training, or train against fixed/random/heuristic opponents. This affects whether observed generalization is attributable to network diversity or opponent co-adaptation.
-23. **Evaluation opponent protocol:** specify which Red policy is used when evaluating Blue and which Blue policy is used when evaluating Red, including whether evaluation is symmetric or uses independently trained counterparts.
-24. **Policy checkpoint pairing:** define whether Red and Blue checkpoints are paired by training iteration, independently selected, or evaluated against a fixed baseline opponent.
-25. **Reward-information leakage:** ensure reward signals used during training do not reveal hidden network configuration or terminal information unavailable to the agent through its observation.
-26. **Variable-size network interface:** determine whether V1 supports a fixed maximum number of hosts with masking/padding or a graph-native representation. The choice must permit evaluation on unseen configurations without changing the learned action/observation interface.
+Phase 1 documentation may reference these dependencies, but their implementation, evidence, and methodological decisions belong to Phase 2.
