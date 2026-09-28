@@ -102,7 +102,7 @@ Observed:
 - 1 failed;
 - failing test: test_red_cannot_move_internally_without_compromised_foothold.
 
-The rule was restored and the documented checkpoint returned to 60 passing tests.
+The rule was restored. Later simulator additions expanded the suite, so the 60-test result is historical fault-injection evidence rather than the current suite size.
 
 This is **not full automated mutation testing**. It is a deliberate fault-injection exercise demonstrating that at least one meaningful cybersecurity invariant is actually protected by a test.
 
@@ -161,13 +161,17 @@ The current repository contains:
 - tests/test_actions.py: 6 test functions;
 - tests/test_environment.py: 54 test functions.
 
-Total: **79 test functions currently present in the repository**.
+## Current runtime test checkpoint
 
-Important distinction:
+The latest verified pytest execution is:
 
-> 79 test functions present does not mean 79 tests have passed in the latest execution.
+- **74 tests collected**;
+- **74 tests passed**;
+- no test failures in that run.
 
-The last explicitly documented full runtime checkpoint in the engineering record was **60 passed**, before later semantic additions. A fresh pytest -q run is required before reporting a current passing count.
+This is the authoritative current runtime checkpoint for the simulator at the time of this document update.
+
+An earlier static/manual count produced 79 apparent test functions, but pytest collected 74. The discrepancy is a bookkeeping/classification issue, not a simulator failure. The project will not report 79 tests passed. Before Phase-2 acceptance, the five non-collected definitions should be identified and the inventory reconciled without changing tests merely to make the numbers match.
 
 ## Phase 1 testing interpretation
 
@@ -185,7 +189,7 @@ It is not yet evidence that the complete simulator is free of defects.
 
 Before RL training:
 
-1. Run the complete current suite and record the actual result.
+1. Run the complete current suite and record the actual result; the current verified checkpoint is 74 collected / 74 passed.
 2. Add public-interface/black-box tests for the observation/action boundary.
 3. Add information-leakage tests for both Red and Blue.
 4. Add deterministic telemetry causality tests.
