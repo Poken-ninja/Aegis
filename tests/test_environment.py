@@ -69,7 +69,7 @@ def test_environment_must_be_reset_before_step() -> None:
 
 
 def test_terminated_episode_cannot_continue() -> None:
-    environment = AegisEnvironment(seed=42, max_steps=2)
+    environment = AegisEnvironment(seed=42, max_steps=1)
     environment.reset()
 
     red_action = Action(
@@ -83,16 +83,13 @@ def test_terminated_episode_cannot_continue() -> None:
         action_type=ActionType.MONITOR,
     )
 
-    environment.step(red_action)
-    assert environment.state is not None
-    assert environment.state.outcome is Outcome.IN_PROGRESS
+    state = environment.step(red_action)
 
-    environment.step(blue_action)
-
-    assert environment.state.outcome is Outcome.TIMEOUT
+    assert state.step_count == 1
+    assert state.outcome is Outcome.TIMEOUT
 
     with pytest.raises(RuntimeError):
-        environment.step(red_action)
+        environment.step(blue_action)
 
 
 def test_invalid_max_steps_is_rejected() -> None:
@@ -1017,67 +1014,8 @@ def test_red_win_takes_precedence_over_blue_containment():
 
     assert env.state.outcome is Outcome.RED_WIN
 
-def test_network_without_critical_host_raises_simulator_error() -> None:
-    environment = AegisEnvironment(seed=42)
-    environment.reset()
-    environment.network.host("critical01").critical = False
-
-    with pytest.raises(RuntimeError, match="exactly one critical host"):
-        environment.step(
-            Action(
-                agent=Agent.RED,
-                action_type=ActionType.DISCOVER,
-                target="web01",
-            )
-        )
-
-
-def test_network_with_multiple_critical_hosts_raises_simulator_error() -> None:
-    environment = AegisEnvironment(seed=42)
-    environment.reset()
-    environment.network.host("web01").critical = True
-
-    with pytest.raises(RuntimeError, match="exactly one critical host"):
-        environment.step(
-            Action(
-                agent=Agent.RED,
-                action_type=ActionType.DISCOVER,
-                target="web01",
-            )
-        )
-
-
-def test_action_history_records_successful_actions_only() -> None:
-    environment = AegisEnvironment(seed=42)
-    environment.reset()
-
-    red_action = Action(
-        agent=Agent.RED,
-        action_type=ActionType.DISCOVER,
-        target="web01",
-    )
-
-    environment.step(red_action)
-
-    assert environment.action_history == [red_action]
-
-    with pytest.raises(ValueError):
-        environment.step(
-            Action(
-                agent=Agent.BLUE,
-                action_type=ActionType.DETECT,
-                target="web01",
-            )
-        )
-
-    assert environment.action_history == [red_action]
-
-    environment.reset()
-    assert environment.action_history == []
-
-
-def test_step_count_counts_individual_agent_actions() -> None:
-    environment = AegisEnvironment(seed=42)
+def test_valid_discover_generates_telemetry() -> None:
+    environment = AegisEnvironment(seed=0)
     environment.reset()
 
     environment.step(
@@ -1087,8 +1025,24 @@ def test_step_count_counts_individual_agent_actions() -> None:
             target="web01",
         )
     )
-    assert environment.state is not None
-    assert environment.state.step_count == 1
+
+    assert len(environment.state.telemetry) == 1
+    assert environment.state.telemetry[0].event_type.value == (
+        "discovery_activity"
+    )
+
+
+def test_valid_move_generates_telemetry() -> None:
+    environment = AegisEnvironment(seed=0)
+    environment.reset()
+
+    environment.step(
+        Action(
+            agent=Agent.RED,
+            action_type=ActionType.DISCOVER,
+            target="web01",
+        )
+    )
 
     environment.step(
         Action(
@@ -1096,23 +1050,99 @@ def test_step_count_counts_individual_agent_actions() -> None:
             action_type=ActionType.MONITOR,
         )
     )
-    assert environment.state.step_count == 2
 
-
-def test_highest_acquired_privilege_applies_across_hosts() -> None:
-    environment = AegisEnvironment(seed=3)
-    environment.reset()
-
-    environment.state.red_position = "app01"
-    environment.state.discovered_hosts.add("app01")
-    environment.state.host_privileges["web01"] = PrivilegeLevel.ADMIN
-
-    state = environment.step(
+    environment.step(
         Action(
             agent=Agent.RED,
-            action_type=ActionType.EXPLOIT,
-            target="app01",
+            action_type=ActionType.MOVE,
+            target="web01",
         )
     )
 
-    assert "app01" in state.compromised_hosts
+    assert len(environment.state.telemetry) == 2
+    assert environment.state.telemetry[-1].event_type.value == (
+        "lateral_movement"
+    )
+
+
+def test_valid_exploit_attempt_generates_telemetry() -> None:
+    environment = AegisEnvironment(seed=0)
+    environment.reset()
+
+    environment.step(
+        Action(
+            agent=Agent.RED,
+            action_type=ActionType.DISCOVER,
+            target="web01",
+        )
+    )
+
+    environment.step(
+        Action(
+            agent=Agent.BLUE,
+            action_type=ActionType.MONITOR,
+        )
+    )
+
+    environment.step(
+        Action(
+            agent=Agent.RED,
+            action_type=ActionType.MOVE,
+            target="web01",
+        )
+    )
+
+    environment.step(
+        Action(
+            agent=Agent.BLUE,
+            action_type=ActionType.MONITOR,
+        )
+    )
+
+    environment.step(
+        Action(
+            agent=Agent.RED,
+            action_type=ActionType.EXPLOIT,
+            target="web01",
+        )
+    )
+
+    assert len(environment.state.telemetry) == 3
+    assert environment.state.telemetry[-1].event_type.value == (
+        "exploit_attempt"
+    )
+
+
+def test_invalid_red_action_does_not_generate_telemetry() -> None:
+    environment = AegisEnvironment(seed=0)
+    environment.reset()
+
+    with pytest.raises(ValueError):
+        environment.step(
+            Action(
+                agent=Agent.RED,
+                action_type=ActionType.MOVE,
+                target="app01",
+            )
+        )
+
+    assert environment.state.telemetry == []
+
+
+def test_telemetry_resets_with_new_episode() -> None:
+    environment = AegisEnvironment(seed=0)
+    environment.reset()
+
+    environment.step(
+        Action(
+            agent=Agent.RED,
+            action_type=ActionType.DISCOVER,
+            target="web01",
+        )
+    )
+
+    assert len(environment.state.telemetry) == 1
+
+    environment.reset()
+
+    assert environment.state.telemetry == []

@@ -1,6 +1,7 @@
 import pytest
 
 from aegis.state import CyberState, Outcome, PrivilegeLevel
+from aegis.telemetry import TelemetryEvent, TelemetryType
 
 
 def test_new_state_starts_in_progress() -> None:
@@ -90,3 +91,40 @@ def test_discovered_hosts_are_independent_between_states() -> None:
     first.discovered_hosts.add("web01")
 
     assert second.discovered_hosts == set()
+
+
+def test_cyber_state_starts_with_empty_telemetry() -> None:
+    state = CyberState(red_position="internet")
+
+    assert state.telemetry == []
+
+
+def test_cyber_state_can_store_telemetry() -> None:
+    state = CyberState(red_position="internet")
+
+    event = TelemetryEvent(
+        event_type=TelemetryType.DISCOVERY_ACTIVITY,
+        source="internet",
+        target="web01",
+    )
+
+    state.telemetry.append(event)
+
+    assert len(state.telemetry) == 1
+    assert state.telemetry[0] == event
+
+
+def test_cyber_states_do_not_share_telemetry_history() -> None:
+    first = CyberState(red_position="internet")
+    second = CyberState(red_position="internet")
+
+    event = TelemetryEvent(
+        event_type=TelemetryType.DISCOVERY_ACTIVITY,
+        source="internet",
+        target="web01",
+    )
+
+    first.telemetry.append(event)
+
+    assert len(first.telemetry) == 1
+    assert second.telemetry == []

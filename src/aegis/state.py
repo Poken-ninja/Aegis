@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 
+from aegis.telemetry import TelemetryEvent
+
 
 class Outcome(str, Enum):
     """Terminal outcomes of a simulation episode."""
@@ -34,6 +36,7 @@ class CyberState:
     isolated_hosts: set[str] = field(default_factory=set)
     remediated_vulnerabilities: set[str] = field(default_factory=set)
     host_privileges: dict[str, PrivilegeLevel] = field(default_factory=dict)
+    telemetry: list[TelemetryEvent] = field(default_factory=list)
     step_count: int = 0
     outcome: Outcome = Outcome.IN_PROGRESS
 
