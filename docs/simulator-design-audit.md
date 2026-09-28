@@ -487,3 +487,35 @@ If a proposed feature does not directly support:
 it should normally be deferred or removed.
 
 The priority is a small trustworthy simulator and a defensible experiment, not feature count.
+
+
+## Testing classification and evidence
+
+A Phase-1 review of the test suite distinguishes the testing methods actually used from methods that have not yet been performed.
+
+### Testing performed
+
+1. **White-box unit testing:** tests directly inspect internal classes, state containers, graph structure, action definitions, and transition logic.
+2. **White-box state-transition testing:** tests protect cybersecurity invariants such as discovery versus movement, compromise, privilege gating, escalation, containment, remediation, terminal conditions, and action counting.
+3. **Scenario/integration-style testing:** selected tests execute multiple actions through AegisEnvironment.step() to validate interactions between network state, cyber state, actions, and terminal logic.
+4. **Negative/error-path testing:** invalid actions and invalid simulator/network configurations are intentionally exercised and rejected.
+5. **Reproducibility testing:** seeded action sequences are compared at intermediate trajectory state, not only final outcome.
+6. **Deliberate fault injection:** the internal movement foothold check was intentionally removed; the test suite detected the violation, and the implementation was restored.
+
+### Testing not yet established
+
+The project has **not** yet established comprehensive black-box testing, property-based testing, fuzz testing, automated mutation-testing coverage, performance/load testing, information-leakage testing for the future observation interface, or RL/agent-learning correctness.
+
+The existing scenario tests are therefore not described as fully black-box tests because several tests directly manipulate internal simulator state to construct edge cases.
+
+### Current inventory
+
+The current repository contains 79 test functions: 7 in test_network.py, 12 in test_state.py, 6 in test_actions.py, and 54 in test_environment.py.
+
+The repository's last explicitly documented full runtime checkpoint was 60 passed before later test additions. Therefore, the presence of 79 test functions must not be reported as 79 currently passing tests until pytest -q is executed again.
+
+### Phase-2 testing requirement
+
+Before RL training, the project must add public-interface tests around the Red/Blue observation and action boundary. These tests must verify that hidden simulator state is not directly or indirectly exposed through observations or telemetry.
+
+Testing documentation is maintained separately in docs/testing-strategy.md.
