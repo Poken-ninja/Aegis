@@ -245,3 +245,55 @@ The project methodology was reviewed before RL planning. The following decisions
 ### Methodological interpretation
 
 These are experiment-design decisions, not learning results. No claim about generalization, agent strength, or performance follows from the decisions themselves.
+
+## Testing methodology re-audit — 2026-09-27
+
+A review of the Phase-1 test suite was performed before Phase 2 implementation to distinguish what has actually been validated from what has not.
+
+### Classification of testing performed
+
+The current suite is predominantly **white-box**:
+
+- tests directly inspect network objects, CyberState, action definitions, and internal environment state;
+- state-transition tests verify cybersecurity invariants and causal rules;
+- negative/error-path tests verify rejection of invalid actions and invalid simulator configurations;
+- reproducibility tests compare seeded trajectories and intermediate state;
+- selected multi-action scenarios provide integration-style validation through AegisEnvironment.step().
+
+The suite is **not yet comprehensive black-box testing** because several tests directly manipulate internal state to construct edge cases. A complete public observation/action interface does not yet exist, so black-box validation of what an autonomous agent can actually see and do is a Phase-2 requirement.
+
+### Deliberate fault validation
+
+The earlier intentional removal of the internal movement foothold check remains classified as deliberate fault injection / mutation-like validation. It demonstrated that the test suite caught a meaningful cybersecurity-model regression, but it was not a systematic mutation-testing campaign and produced no mutation score.
+
+### Current test inventory
+
+The current repository contains 79 test functions:
+
+- test_network.py: 7;
+- test_state.py: 12;
+- test_actions.py: 6;
+- test_environment.py: 54.
+
+This count is a static inventory of test functions, not a passing-test result.
+
+The last explicitly documented complete runtime checkpoint was 60 passed before later test additions. A fresh pytest -q execution is therefore required before Phase-1 acceptance and before reporting a current passing count.
+
+### Testing gaps identified
+
+The current project has not yet established:
+
+- comprehensive black-box/public-interface testing;
+- information-leakage tests for the future Red/Blue observation boundary;
+- deterministic synthetic-telemetry causality tests;
+- property-based testing;
+- fuzz testing;
+- automated mutation-testing coverage;
+- performance/load testing;
+- RL learning correctness or generalization performance.
+
+### Phase-2 testing requirement
+
+Before RL training, the observation/action interface must have public-interface tests that verify both direct and indirect leakage of hidden simulator state. Blue-visible telemetry must have a causal source in simulated activity and must not function as a hidden ground-truth channel.
+
+These are engineering-validity requirements, not research results.
