@@ -563,13 +563,13 @@ The current locked direction is therefore:
 
 ## ADR-038 — Do not equate test count with passing evidence
 
-**Status:** Accepted
+**Status:** Accepted; clarified 2026-09-27
 
-**Decision:** Documentation will distinguish the number of test functions present from the number of tests that passed in an executed test run.
+**Decision:** Documentation will distinguish static/manual test-function counts from pytest-collected tests and from tests that actually passed in an executed run.
 
-**Reason:** The repository currently contains 79 test functions, while the last explicitly documented full runtime checkpoint was 60 passed before later additions. A current passing count requires a fresh test execution.
+**Reason:** A previous static/manual inventory produced 79 apparent test functions, while the latest verified pytest run collected 74 and all 74 passed. The 79 figure is therefore not a passing-test result and should not be used as one.
 
-**Research implication:** Test results must always include the execution status and, where relevant, the commit or code state tested.
+**Research implication:** Test results must always include the execution status and, where relevant, the commit or code state tested. The current verified runtime checkpoint is 74 collected / 74 passed.
 
 ## ADR-039 — Deliberate fault injection is not full mutation testing
 
