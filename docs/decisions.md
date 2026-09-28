@@ -567,9 +567,9 @@ The current locked direction is therefore:
 
 **Decision:** Documentation will distinguish static/manual test-function counts from pytest-collected tests and from tests that actually passed in an executed run.
 
-**Reason:** A previous static/manual inventory produced 79 apparent test functions, while the latest verified pytest run collected 74 and all 74 passed. The 79 figure is therefore not a passing-test result and should not be used as one.
+**Reason:** A previous static/manual inventory produced 79 apparent test functions, while the latest verified pytest run collected 116 and all 116 passed. The 79 figure is therefore not a passing-test result and should not be used as one.
 
-**Research implication:** Test results must always include the execution status and, where relevant, the commit or code state tested. The current verified runtime checkpoint is 74 collected / 74 passed.
+**Research implication:** Test results must always include the execution status and, where relevant, the commit or code state tested. The current verified runtime checkpoint is 116 collected / 116 passed.
 
 ## ADR-039 — Deliberate fault injection is not full mutation testing
 
@@ -601,3 +601,26 @@ For future phases, every major test claim should identify:
 4. what evidence was observed;
 5. what remains untested;
 6. whether the result is an engineering validation result or a research experiment result.
+
+
+## ADR-041 — Synthetic telemetry is causal Blue evidence
+
+**Status:** Accepted for Phase 2
+
+**Decision:** Blue receives synthetic telemetry generated from valid Red actions. Telemetry represents observable activity such as discovery, lateral movement, exploit attempts, and privilege-escalation attempts; it does not directly encode hidden simulator outcomes.
+
+**Reason:** The Blue learning problem should require inference from evidence rather than direct access to the simulator's ground-truth compromise state.
+
+**Research implication:** An exploit-attempt event means that an exploit was attempted, not that exploitation succeeded. Invalid Red actions generate no telemetry.
+
+## ADR-042 — Blue observation telemetry is separated from hidden cyber state
+
+**Status:** Accepted for Phase 2
+
+**Decision:** The simulator retains ground-truth cyber state internally, while Blue receives telemetry through the explicit observation interface. Blue observations must not expose Red position, compromised-host ground truth, or Red privilege.
+
+**Reason:** Information leakage would make detection and defense performance difficult to interpret as autonomous behavior.
+
+**Validation:** The current observation/telemetry tests verify direct forbidden-field absence and hidden-state invariance for Blue-visible telemetry.
+
+**Research implication:** Observation leakage is treated as a threat to experimental validity. These checks must remain part of the pre-RL acceptance criteria.
