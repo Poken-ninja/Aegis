@@ -268,16 +268,15 @@ The earlier intentional removal of the internal movement foothold check remains 
 
 ### Current test inventory
 
-The current repository contains 79 test functions:
+The latest verified pytest runtime checkpoint is:
 
-- test_network.py: 7;
-- test_state.py: 12;
-- test_actions.py: 6;
-- test_environment.py: 54.
+- **74 tests collected**;
+- **74 tests passed**;
+- no test failures in that run.
 
-This count is a static inventory of test functions, not a passing-test result.
+A previous static/manual count reported 79 apparent test functions, but pytest collected 74. This discrepancy is a bookkeeping/classification issue, not a simulator failure. The project will report the executed pytest result as 74 collected / 74 passed and will not describe 79 as a passing test count.
 
-The last explicitly documented complete runtime checkpoint was 60 passed before later test additions. A fresh pytest -q execution is therefore required before Phase-1 acceptance and before reporting a current passing count.
+Before Phase-2 acceptance, the five definitions that were included in the manual count but not collected by pytest should be identified and the inventory reconciled.
 
 ### Testing gaps identified
 
@@ -297,3 +296,8 @@ The current project has not yet established:
 Before RL training, the observation/action interface must have public-interface tests that verify both direct and indirect leakage of hidden simulator state. Blue-visible telemetry must have a causal source in simulated activity and must not function as a hidden ground-truth channel.
 
 These are engineering-validity requirements, not research results.
+
+
+### Runtime checkpoint reconciliation — 2026-09-27
+
+The 79-versus-74 discrepancy was investigated after the latest test run. The authoritative execution result is **74 collected / 74 passed**. The earlier 79 figure came from a static/manual function count and should not be used as a pytest result. No simulator failure was associated with this discrepancy. The remaining bookkeeping task is to identify the five non-collected definitions before Phase-2 acceptance.
