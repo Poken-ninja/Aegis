@@ -550,3 +550,54 @@ The current locked direction is therefore:
 6. Evaluate familiar and unseen configurations, distinguishing instance-level and family-level novelty.
 7. Analyze generalization gaps and failure modes.
 8. Only if the core experiment is successful, consider simultaneous Red/Blue learning as an extension.
+
+## ADR-037 — Classify testing evidence by method
+
+**Status:** Accepted
+
+**Decision:** AEGIS documentation will distinguish white-box unit/state-transition tests, scenario/integration-style tests, negative/error-path tests, reproducibility tests, deliberate fault injection, and future black-box tests rather than referring to the entire suite generically as "testing."
+
+**Reason:** The current suite primarily inspects internal simulator state and therefore is predominantly white-box. Some tests exercise multi-action scenarios through the environment API, but they are not fully black-box because test setup often manipulates internal state directly.
+
+**Research implication:** Claims about simulator validation must match the actual testing method. The project must not claim comprehensive black-box validation before the public observation/action interface exists and is tested through its public boundary.
+
+## ADR-038 — Do not equate test count with passing evidence
+
+**Status:** Accepted
+
+**Decision:** Documentation will distinguish the number of test functions present from the number of tests that passed in an executed test run.
+
+**Reason:** The repository currently contains 79 test functions, while the last explicitly documented full runtime checkpoint was 60 passed before later additions. A current passing count requires a fresh test execution.
+
+**Research implication:** Test results must always include the execution status and, where relevant, the commit or code state tested.
+
+## ADR-039 — Deliberate fault injection is not full mutation testing
+
+**Status:** Accepted
+
+**Decision:** The Phase-1 intentional movement-rule break is classified as deliberate fault injection / mutation-like validation, not as a mutation-testing campaign or quantitative mutation score.
+
+**Reason:** One manually introduced defect demonstrated that a meaningful cybersecurity invariant was protected, but it does not measure test-suite effectiveness across a systematic set of automatically generated mutations.
+
+**Research implication:** The project may use deliberate fault injection as engineering evidence without overstating its coverage.
+
+## ADR-040 — Public-interface testing is required before RL
+
+**Status:** Accepted for Phase 2
+
+**Decision:** Before RL training begins, AEGIS must add black-box/public-interface tests for the agent observation/action boundary, including information-leakage tests and deterministic telemetry-causality tests.
+
+**Reason:** The current simulator tests validate internal state transitions, but the research question depends on what autonomous agents can observe and control. The future interface must therefore be tested independently of hidden simulator implementation.
+
+**Research implication:** Observation leakage is treated as a threat to experimental validity, not merely a software bug.
+
+## Testing evidence rule
+
+For future phases, every major test claim should identify:
+
+1. what was tested;
+2. which testing method was used;
+3. whether the test is white-box or black-box;
+4. what evidence was observed;
+5. what remains untested;
+6. whether the result is an engineering validation result or a research experiment result.
