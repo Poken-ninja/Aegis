@@ -301,3 +301,27 @@ These are engineering-validity requirements, not research results.
 ### Runtime checkpoint reconciliation — 2026-09-27
 
 The 79-versus-74 discrepancy was investigated after the latest test run. The authoritative execution result is **74 collected / 74 passed**. The earlier 79 figure came from a static/manual function count and should not be used as a pytest result. No simulator failure was associated with this discrepancy. The remaining bookkeeping task is to identify the five non-collected definitions before Phase-2 acceptance.
+
+
+## Phase 2 checkpoint — Observation boundary and synthetic telemetry
+
+**Date:** 2026-09-27
+
+**Work completed:**
+- connected valid Red actions to synthetic telemetry generation;
+- stored telemetry in episode cyber state;
+- exposed telemetry through Blue observations;
+- preserved the distinction between telemetry evidence and hidden simulator ground truth;
+- added observation-boundary tests for direct and indirect leakage;
+- verified that Blue telemetry is immutable from the observation side.
+
+**Evidence:**
+- pytest collected 116 tests;
+- pytest passed 116 tests;
+- no RL training or generalization experiment was run.
+
+**Important interpretation:** This is engineering validation of the simulator/observation boundary. It is not evidence of agent learning, detection performance, or network generalization.
+
+**Design decision:** Blue must infer defensive state from causal synthetic evidence rather than reading `compromised_hosts`, `red_position`, or Red privilege directly.
+
+**Remaining work:** complete the public environment observation/action interface, establish heuristic baselines, measure throughput, then select the smallest defensible RL setup.
