@@ -154,19 +154,12 @@ Those are separate validation questions.
 
 ## Current test inventory
 
-The current repository contains:
-
-- tests/test_network.py: 7 test functions;
-- tests/test_state.py: 12 test functions;
-- tests/test_actions.py: 6 test functions;
-- tests/test_environment.py: 54 test functions.
-
 ## Current runtime test checkpoint
 
-The latest verified pytest execution is:
+The latest verified pytest execution for the current Phase-2 observation/telemetry work is:
 
-- **74 tests collected**;
-- **74 tests passed**;
+- **116 tests collected**;
+- **116 tests passed**;
 - no test failures in that run.
 
 This is the authoritative current runtime checkpoint for the simulator at the time of this document update.
@@ -189,7 +182,7 @@ It is not yet evidence that the complete simulator is free of defects.
 
 Before RL training:
 
-1. Run the complete current suite and record the actual result; the current verified checkpoint is 74 collected / 74 passed.
+1. Run the complete current suite and record the actual result; the current verified checkpoint is 116 collected / 116 passed.
 2. Add public-interface/black-box tests for the observation/action boundary.
 3. Add information-leakage tests for both Red and Blue.
 4. Add deterministic telemetry causality tests.
