@@ -682,7 +682,7 @@ def test_blue_can_detect_compromised_host():
     assert "web01" in env.state.detected_hosts
 
 
-def test_blue_cannot_detect_uncompromised_host():
+def test_blue_can_detect_observed_activity_without_compromise():
     env = AegisEnvironment(seed=1)
     env.reset()
 
@@ -696,7 +696,24 @@ def test_blue_cannot_detect_uncompromised_host():
         )
     )
 
-    with pytest.raises(ValueError):
+    env.step(
+        Action(
+            agent=Agent.BLUE,
+            action_type=ActionType.DETECT,
+            target="web01",
+        )
+    )
+
+    assert "web01" in env.state.detected_hosts
+
+
+def test_blue_cannot_detect_without_observable_telemetry():
+    env = AegisEnvironment(seed=1)
+    env.reset()
+
+    env.state.discovered_hosts.add("web01")
+
+    with pytest.raises(ValueError, match="observable telemetry"):
         env.step(
             Action(
                 agent=Agent.BLUE,
