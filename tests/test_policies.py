@@ -63,6 +63,7 @@ def test_red_candidate_generation_can_move_to_discovered_neighbor() -> None:
                 ("web01", "app01"),
             }
         ),
+        current_host_compromised=True,
     )
 
     candidates = red_candidate_actions(observation)
@@ -78,6 +79,7 @@ def test_red_candidate_generation_uses_only_observation_for_privilege() -> None:
     observation = RedObservation(
         current_position="app01",
         discovered_hosts=frozenset({"app01"}),
+        current_host_compromised=True,
         acquired_privilege="user",
     )
 
@@ -241,5 +243,5 @@ def test_red_observation_local_neighbor_does_not_reveal_distant_edge() -> None:
 
     observation = build_red_observation(network, state)
 
-    assert ("web01", "app01") in observation.known_connections
+    assert ("app01", "web01") in observation.known_connections
     assert ("app01", "db01") not in observation.known_connections
