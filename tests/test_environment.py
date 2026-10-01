@@ -712,6 +712,9 @@ def test_blue_cannot_detect_without_observable_telemetry():
     env.reset()
 
     env.state.discovered_hosts.add("web01")
+    # This test isolates Blue's detection precondition. The turn system is
+    # tested separately, so advance directly to Blue without creating telemetry.
+    env.current_agent = Agent.BLUE
 
     with pytest.raises(ValueError, match="observable telemetry"):
         env.step(
