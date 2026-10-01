@@ -168,6 +168,7 @@ def test_random_red_policy_is_reproducible() -> None:
                 ("web01", "app01"),
             }
         ),
+        current_host_compromised=True,
     )
 
     first = RandomRedPolicy().select_action(
