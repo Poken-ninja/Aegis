@@ -638,3 +638,15 @@ For future phases, every major test claim should identify:
 **Research implication:** The public Red observation can determine whether movement from the current host is plausible without exposing hidden simulator state. The baseline policy therefore does not need an environment-provided action mask.
 
 **Validation required:** Test successful foothold creation, privilege transfer on movement, observation exposure of current-host compromise, and suppression of movement candidates without a foothold before episode-runner metrics are treated as valid.
+
+## ADR-044 — Invalid policy actions are recorded separately from episode outcomes
+
+**Status:** Accepted for Phase 2 baseline runner
+
+**Decision:** If a policy selects an action that the simulator rejects, the runner records an invalid-action termination separately from RED_WIN, BLUE_WIN, and TIMEOUT. The invalid action does not consume a simulator step and is not silently converted into an agent loss or opponent victory.
+
+**Reason:** Observation-derived candidate generation cannot assume hidden simulator state. Treating an invalid action as a normal win/loss would contaminate the primary performance metrics; silently retrying with another action would effectively provide the policy with an environment-side action mask.
+
+**Research implication:** Baseline reports must expose invalid-action rate separately. Before RL training, the action interface should be refined so the learning formulation has a principled treatment of invalid actions rather than relying on hidden-state rejection sampling.
+
+**Scope:** The current runner is measurement scaffolding for baseline validation, not yet the final RL environment interface.
