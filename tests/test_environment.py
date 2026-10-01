@@ -550,9 +550,11 @@ def test_escalate_requires_compromised_host() -> None:
         environment.step(action)
 
 
-def test_successful_escalation_grants_user_privilege() -> None:
+def test_successful_escalation_grants_admin_privilege_from_user() -> None:
     environment = AegisEnvironment(seed=3)
     _move_red_to_web01_and_compromise(environment)
+
+    assert environment.state.host_privileges["web01"] is PrivilegeLevel.USER
 
     action = Action(
         agent=Agent.RED,
@@ -562,13 +564,15 @@ def test_successful_escalation_grants_user_privilege() -> None:
 
     state = environment.step(action)
 
-    assert state.host_privileges["web01"].value == "user"
+    assert state.host_privileges["web01"] is PrivilegeLevel.ADMIN
 
 
-def test_failed_escalation_does_not_change_privilege() -> None:
+def test_failed_escalation_preserves_existing_user_privilege() -> None:
     environment = AegisEnvironment(seed=1)
     _move_red_to_web01_and_compromise(environment)
 
+    assert environment.state.host_privileges["web01"] is PrivilegeLevel.USER
+
     action = Action(
         agent=Agent.RED,
         action_type=ActionType.ESCALATE,
@@ -577,37 +581,24 @@ def test_failed_escalation_does_not_change_privilege() -> None:
 
     state = environment.step(action)
 
-    assert state.host_privileges.get("web01") is None
+    assert state.host_privileges["web01"] is PrivilegeLevel.USER
 
 
-def test_escalation_can_progress_from_user_to_admin() -> None:
+def test_escalation_from_user_to_admin_requires_one_successful_action() -> None:
     environment = AegisEnvironment(seed=3)
     _move_red_to_web01_and_compromise(environment)
 
-    first_escalation = Action(
+    assert environment.state.host_privileges["web01"] is PrivilegeLevel.USER
+
+    escalation = Action(
         agent=Agent.RED,
         action_type=ActionType.ESCALATE,
         target="web01",
     )
 
-    environment.step(first_escalation)
+    state = environment.step(escalation)
 
-    environment.step(
-        Action(
-            agent=Agent.BLUE,
-            action_type=ActionType.MONITOR,
-        )
-    )
-
-    second_escalation = Action(
-        agent=Agent.RED,
-        action_type=ActionType.ESCALATE,
-        target="web01",
-    )
-
-    state = environment.step(second_escalation)
-
-    assert state.host_privileges["web01"].value == "admin"
+    assert state.host_privileges["web01"] is PrivilegeLevel.ADMIN
 
 
 def test_escalate_cannot_run_on_already_admin_host() -> None:
