@@ -37,7 +37,7 @@ Primary measures:
 
 **Phase 2 — Controlled learning methodology**
 
-The simulator and public Red/Blue observation-policy boundary are implemented and validated. The current checkpoint is **136 tests collected / 136 passed**. Baseline experiment design and variable network configuration remain before RL training.
+The simulator and public Red/Blue observation-policy boundary are implemented and undergoing final research-design validation. A fresh full-suite run is required after the latest test correction; historical test counts are not treated as current evidence. The fixed-vs-diverse research design, hypotheses, metrics, controls, and contribution boundary are now documented in `docs/research-design-freeze.md`. Baseline agents and the seeded configuration generator remain before RL training.
 
 ## Repository structure
 
@@ -87,4 +87,4 @@ A simulator result is not accepted merely because code executes. It must have a 
 - Blue containment/remediation still require detected compromise.
 - The public baseline runner records invalid policy actions separately from experimental outcomes.
 
-No RL result is considered valid until the observation/action interface is specified and tested.
+No RL result is considered valid until the observation/action interface, hypotheses, metrics, controls, configuration splits, and evaluation protocol are specified and tested. See `docs/research-design-freeze.md`.
