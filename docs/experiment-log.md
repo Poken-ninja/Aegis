@@ -325,3 +325,38 @@ The 79-versus-74 discrepancy was investigated after the latest test run. The aut
 **Design decision:** Blue must infer defensive state from causal synthetic evidence rather than reading `compromised_hosts`, `red_position`, or Red privilege directly.
 
 **Remaining work:** complete the public environment observation/action interface, establish heuristic baselines, measure throughput, then select the smallest defensible RL setup.
+
+## Research-design freeze review — 2026-09-30
+
+A cross-check was performed across the research question, hypotheses, metrics, experimental controls, simulator assumptions, and candidate contribution before further RL implementation.
+
+### Decisions
+
+- The frozen research question remains unchanged.
+- H1 was narrowed to familiar-to-unseen performance degradation.
+- H2 was narrowed to absolute unseen-network performance.
+- Red and Blue metrics are analyzed separately.
+- No composite performance score will be used.
+- Training exposure to network-configuration diversity is the primary manipulated variable.
+- Fixed and diverse conditions receive matched primary training budgets.
+- Opponent behavior is controlled rather than simultaneously learned in the core experiment.
+- Instance-level unseen configurations are the primary generalization test.
+- Unseen topology/configuration families are secondary if schedule permits.
+- Configuration randomness and episode randomness remain separate.
+- The candidate contribution is explicitly provisional because prior work already covers simulated cyber-agent RL and generalization in related settings.
+
+### Literature check
+
+The review confirmed that AEGIS must not claim that cyber-agent generalization, simulated Red/Blue interaction, or autonomous cyber RL is unexplored.
+
+CyberBattleSim already provides abstract enterprise-network Red/Blue simulation and discusses topology/configuration effects. NASimEmu explicitly studies transfer to novel scenarios. Related work studies RL defenders and attacker/defender simulation, including generalization across attacker strategies. A recent 2026 MAL Simulator paper also reports trained offensive and defensive agents in a cyber-operation simulator.
+
+The resulting AEGIS contribution is therefore framed narrowly as a controlled empirical comparison of fixed versus diverse network-configuration training under held-out evaluation.
+
+### Research-design artifact
+
+The complete protocol is recorded in:
+
+docs/research-design-freeze.md
+
+This review is a methodological checkpoint, not an experimental result.
