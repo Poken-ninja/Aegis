@@ -190,6 +190,11 @@ class AegisEnvironment:
 
         self.state.red_position = target
 
+        # V1 models acquired privilege as a retained synthetic capability.
+        # Moving to a newly compromised host transfers that capability to the
+        # current host so the observation remains locally meaningful.
+        self.state.host_privileges[target] = self._current_red_privilege()
+
         self._record_red_telemetry(
             ActionType.MOVE,
             source=current_position,
@@ -262,6 +267,13 @@ class AegisEnvironment:
 
         if self.rng.random() < self.EXPLOIT_SUCCESS_PROBABILITY:
             self.state.compromised_hosts.add(target)
+
+            # Successful exploitation establishes a synthetic USER-level
+            # foothold unless Red already has a higher retained capability.
+            current_privilege = self._current_red_privilege()
+            if current_privilege is PrivilegeLevel.NONE:
+                current_privilege = PrivilegeLevel.USER
+            self.state.host_privileges[target] = current_privilege
 
     def _current_red_privilege(self) -> PrivilegeLevel:
         """Return Red's highest acquired synthetic privilege."""
