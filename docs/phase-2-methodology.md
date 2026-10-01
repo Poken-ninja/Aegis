@@ -139,12 +139,18 @@ Reported Red and Blue results must identify the opponent policy used during eval
 
 The current local simulator/observation test suite reports:
 
-- **116 tests collected**
-- **116 tests passed**
+- **136 tests collected**
+- **136 tests passed**
 
 This is an engineering validation result only. It is not an RL result and does not establish generalization.
 
 No PPO, MARL, DGX training, or generalization performance result has been produced yet.
+
+## Baseline action-validity rule
+
+Blue detection is evidence-based. A `DETECT` action is valid when the target has observable synthetic telemetry, regardless of whether the underlying Red action successfully compromised the host. `ISOLATE` and `REMEDIATE` remain dependent on detected compromise because those actions change defensive state around an actual compromised host.
+
+This prevents the baseline policy from needing hidden `compromised_hosts` information merely to avoid invalid detection actions. Invalid actions remain separately recorded by the episode runner.
 
 ## Phase 2 limitations
 
