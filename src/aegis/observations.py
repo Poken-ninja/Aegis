@@ -20,6 +20,7 @@ class RedObservation:
     known_vulnerabilities: frozenset[str] = frozenset()
     known_remediated_vulnerabilities: frozenset[str] = frozenset()
     known_isolated_hosts: frozenset[str] = frozenset()
+    current_host_compromised: bool = False
     acquired_privilege: str = "none"
 
 
@@ -94,6 +95,7 @@ def build_red_observation(
             known_remediated_vulnerabilities
         ),
         known_isolated_hosts=known_isolated_hosts,
+        current_host_compromised=state.red_position in state.compromised_hosts,
         acquired_privilege=(
             acquired_privilege.value
             if acquired_privilege is not None
