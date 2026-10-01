@@ -304,7 +304,7 @@ For V1, BLUE_WIN is deliberately defined as successful containment: Blue must de
 
 MONITOR is currently a no-op placeholder. DETECT is a low-level state-transition primitive that marks an already-compromised host as detected. These mechanics are sufficient for deterministic simulator testing but are not yet the final autonomous Blue observation/action interface.
 
-Before RL, the project must define a separate Blue observation layer that does not expose the hidden compromised_hosts state directly.
+The Blue observation layer is now implemented as a separate interface and must remain information-bounded. The current evidence-based detection rule allows DETECT when causal telemetry exists, while containment/remediation still require detected compromise.
 
 ## Partial observability
 
@@ -453,7 +453,7 @@ The main simulator design evolved through several evidence-driven corrections:
 
 The detailed historical record is maintained in `docs/decisions.md` and `docs/experiment-log.md`.
 
-## Current Phase 1 status
+## Historical Phase 1 status
 
 Phase 1 simulator semantics have now been reconciled with the implementation.
 
