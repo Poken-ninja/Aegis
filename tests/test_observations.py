@@ -108,7 +108,7 @@ def test_red_cannot_see_connections_beyond_local_neighborhood() -> None:
     observation = build_red_observation(network, state)
 
     assert ("internet", "web01") in observation.known_connections
-    assert ("web01", "app01") in observation.known_connections
+    assert ("app01", "web01") in observation.known_connections
     assert ("app01", "db01") not in observation.known_connections
 
 
