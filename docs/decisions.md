@@ -624,3 +624,17 @@ For future phases, every major test claim should identify:
 **Validation:** The current observation/telemetry tests verify direct forbidden-field absence and hidden-state invariance for Blue-visible telemetry.
 
 **Research implication:** Observation leakage is treated as a threat to experimental validity. These checks must remain part of the pre-RL acceptance criteria.
+
+## ADR-043 — Make Red's synthetic foothold usable by the observation-only policy
+
+**Status:** Accepted for Phase 2
+
+**Decision:** A successful Red exploit creates a synthetic USER-level foothold when Red has no higher retained privilege. When Red moves to another discovered host using a valid compromised foothold, the retained synthetic capability is transferred to the destination host. Red observations explicitly expose whether the current host is compromised.
+
+**Reason:** The simulator previously recorded successful compromise separately from privilege, while the observation-derived policy had no way to distinguish a compromised current host from an uncompromised one. That could produce candidate movement actions that the environment would reject. It also made successful exploitation unable to establish a usable progression path through the reference network.
+
+**Cybersecurity meaning:** The model now has a simple causal chain: exploit → foothold → movement → further exploitation/escalation. This remains a synthetic abstraction and does not model real credentials or exploitation procedures.
+
+**Research implication:** The public Red observation can determine whether movement from the current host is plausible without exposing hidden simulator state. The baseline policy therefore does not need an environment-provided action mask.
+
+**Validation required:** Test successful foothold creation, privilege transfer on movement, observation exposure of current-host compromise, and suppression of movement candidates without a foothold before episode-runner metrics are treated as valid.
