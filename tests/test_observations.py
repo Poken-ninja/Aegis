@@ -98,7 +98,7 @@ def test_red_cannot_see_undiscovered_host_role() -> None:
     assert "critical01" not in observation.known_host_roles
 
 
-def test_red_cannot_see_connections_to_undiscovered_hosts() -> None:
+def test_red_cannot_see_connections_beyond_local_neighborhood() -> None:
     network = build_reference_network()
     state = CyberState(
         red_position="web01",
@@ -108,7 +108,7 @@ def test_red_cannot_see_connections_to_undiscovered_hosts() -> None:
     observation = build_red_observation(network, state)
 
     assert ("internet", "web01") in observation.known_connections
-    assert ("web01", "app01") not in observation.known_connections
+    assert ("web01", "app01") in observation.known_connections
     assert ("app01", "db01") not in observation.known_connections
 
 
@@ -191,6 +191,7 @@ def test_blue_observation_does_not_expose_compromised_hosts() -> None:
 
     assert not hasattr(observation, "compromised_hosts")
 
+
 def test_hidden_vulnerability_change_does_not_change_red_observation() -> None:
     network = build_reference_network()
 
@@ -240,6 +241,7 @@ def test_hidden_remediation_change_does_not_change_red_observation() -> None:
     observation_after = build_red_observation(network, state)
 
     assert observation_before == observation_after
+
 
 def test_blue_observation_receives_telemetry() -> None:
     network = build_reference_network()

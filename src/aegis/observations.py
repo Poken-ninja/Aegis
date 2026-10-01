@@ -44,10 +44,17 @@ def build_red_observation(
 
     discovered_hosts = frozenset(state.discovered_hosts)
 
+    # Red can observe the immediate network neighborhood of its current
+    # position. This permits the policy to construct discovery/movement
+    # candidates without exposing the rest of the hidden topology.
     known_connections = frozenset(
         tuple(sorted((source, target)))
         for source, target in network.graph.edges
-        if source in discovered_hosts and target in discovered_hosts
+        if (
+            source == state.red_position
+            or target == state.red_position
+            or (source in discovered_hosts and target in discovered_hosts)
+        )
     )
 
     known_host_roles = {
