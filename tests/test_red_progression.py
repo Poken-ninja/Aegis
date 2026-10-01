@@ -7,7 +7,7 @@ from aegis.state import PrivilegeLevel
 
 
 def test_successful_exploit_creates_user_foothold() -> None:
-    environment = AegisEnvironment(seed=0)
+    environment = AegisEnvironment(seed=1)
     environment.reset()
     environment.step(Action(Agent.RED, ActionType.DISCOVER, "web01"))
     environment.step(Action(Agent.BLUE, ActionType.MONITOR))
