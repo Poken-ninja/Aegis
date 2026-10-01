@@ -137,20 +137,58 @@ Reported Red and Blue results must identify the opponent policy used during eval
 
 ## Current evidence
 
-The current local simulator/observation test suite reports:
+The latest verified local test result is maintained from actual pytest execution, not from static test-function counts. The most recent pre-freeze run reported **136 collected / 136 passed**; a subsequent test correction added one test, so the current branch requires a fresh local full-suite run before a new passing count is recorded.
 
-- **136 tests collected**
-- **136 tests passed**
+This remains engineering validation only. It is not an RL result and does not establish generalization.
 
-This is an engineering validation result only. It is not an RL result and does not establish generalization.
+No PPO, MARL, DGX training, or generalization performance result has been produced.
 
-No PPO, MARL, DGX training, or generalization performance result has been produced yet.
+## Research-design freeze
+
+The full V1 protocol is now specified in `docs/research-design-freeze.md`.
+
+The core hypotheses are:
+
+- **H1:** diverse-network training should produce smaller familiar-to-unseen performance degradation than fixed-network training under matched controls.
+- **H2:** diverse-network training should produce better unseen-network performance than fixed-network training under matched controls.
+
+The primary independent variable is training exposure to network-configuration diversity.
+
+Primary Red metrics:
+- attack success rate;
+- actions to objective on successful attacks;
+- familiar-to-unseen degradation.
+
+Primary Blue metrics:
+- defense/containment success rate;
+- detection time;
+- familiar-to-unseen degradation.
+
+The V1 analysis reports raw familiar and unseen values and a direction-normalized degradation measure. No composite score is used.
+
+The core evaluation uses controlled opponents. Simultaneous Red/Blue co-adaptation is deferred.
+
+## Research contribution boundary
+
+AEGIS does not claim novelty for:
+- simulated cyber-agent RL itself;
+- Red/Blue simulation itself;
+- generalization to novel cyber scenarios itself;
+- PPO or another RL algorithm.
+
+The candidate contribution is the controlled empirical comparison of fixed versus diverse network-configuration training for Red and Blue policies under held-out configuration evaluation. This remains provisional pending the final literature review.
 
 ## Baseline action-validity rule
 
 Blue detection is evidence-based. A `DETECT` action is valid when the target has observable synthetic telemetry, regardless of whether the underlying Red action successfully compromised the host. `ISOLATE` and `REMEDIATE` remain dependent on detected compromise because those actions change defensive state around an actual compromised host.
 
 This prevents the baseline policy from needing hidden `compromised_hosts` information merely to avoid invalid detection actions. Invalid actions remain separately recorded by the episode runner.
+
+## Experimental controls now frozen
+
+The main experiment must hold constant simulator/version, observation/action model, reward formulation, RL algorithm, policy architecture, hyperparameters, primary training action budget, episode limit, configuration-generation distribution, configuration splits, evaluation seeds, checkpoint-selection rule, and opponent protocol. The only planned primary difference is fixed versus diverse training exposure.
+
+The exact training budget and number of independent training seeds remain intentionally unfixed until throughput measurement. They must be frozen before the main experiment.
 
 ## Phase 2 limitations
 
@@ -179,8 +217,11 @@ Negative results, failed experiments, and implementation failures remain part of
 ## Next engineering checkpoint
 
 Before RL:
-1. complete the public Red/Blue observation-action interface;
-2. test it through the public boundary;
-3. establish simple random and deterministic heuristic baselines;
-4. measure simulator throughput;
-5. then select the smallest defensible RL configuration.
+1. complete and test the public Red/Blue observation-action interface;
+2. establish random and deterministic heuristic baselines;
+3. build and test the seeded configuration generator;
+4. freeze training/familiar/unseen configuration splits;
+5. measure simulator and baseline throughput;
+6. define the reward and invalid-action treatment for the RL formulation;
+7. select the smallest defensible RL algorithm and training budget;
+8. run independent pilot training seeds before the main experiment.
