@@ -35,9 +35,9 @@ Primary measures:
 
 ## Current status
 
-**Phase 1 — Simulator**
+**Phase 2 — Controlled learning methodology**
 
-Current work establishes a deterministic, testable network model before reinforcement learning is introduced.
+The simulator and public Red/Blue observation-policy boundary are implemented and validated. The current checkpoint is **136 tests collected / 136 passed**. Baseline experiment design and variable network configuration remain before RL training.
 
 ## Repository structure
 
@@ -46,7 +46,11 @@ src/aegis/
   actions.py
   environment.py
   network.py
+  observations.py
+  policies.py
+  runner.py
   state.py
+  telemetry.py
 tests/
   test_actions.py
   test_environment.py
@@ -61,7 +65,7 @@ docs/
   experiment-log.md
 ```
 
-RL, multi-agent learning, topology variation, and held-out generalization experiments are intentionally deferred until the simulator semantics are accepted and the Phase-2 observation/action interface is explicitly defined.
+RL, topology variation, and held-out generalization experiments are intentionally deferred until baseline behavior, network-configuration generation, and the remaining RL interface decisions are validated.
 
 ## Development principle
 
@@ -79,6 +83,8 @@ A simulator result is not accepted merely because code executes. It must have a 
 - TIMEOUT is distinct from Blue victory.
 - Simulator/configuration errors are exceptions, not experimental outcomes.
 - The environment records successful actions in action_history for reproducibility.
-- The current Blue detection primitive is not the final RL observation model.
+- Blue detection is evidence-based: observable telemetry can support detection even when an underlying Red action did not produce compromise.
+- Blue containment/remediation still require detected compromise.
+- The public baseline runner records invalid policy actions separately from experimental outcomes.
 
 No RL result is considered valid until the observation/action interface is specified and tested.
