@@ -662,3 +662,46 @@ For future phases, every major test claim should identify:
 **Cybersecurity meaning:** Detection represents identifying suspicious activity; it is not equivalent to proving compromise. Containment and remediation operate on the stronger condition that a compromise has actually occurred.
 
 **Research implication:** Baseline and future learned Blue policies can make detection decisions from observable evidence without receiving `compromised_hosts`. Detection validity is therefore separated from containment validity.
+
+
+## ADR-046 — Freeze the research design before RL implementation
+
+**Status:** Accepted for V1
+
+**Decision:** The V1 research question, hypotheses, variables, metrics, controls, configuration splits, opponent protocol, simulator assumptions, and acceptance gate are consolidated in `docs/research-design-freeze.md`.
+
+**Reason:** Continuing implementation without a single experimental specification risks building features that do not support the research question or changing the interpretation after seeing results.
+
+**Research implication:** Future engineering work must support the frozen design or require an explicit decision change.
+
+## ADR-047 — H1 and H2 are separated into gap and absolute unseen-performance tests
+
+**Status:** Accepted for V1
+
+**Decision:** H1 tests familiar-to-unseen degradation; H2 tests absolute unseen performance. Both compare fixed versus diverse training under matched controls.
+
+**Reason:** The previous hypotheses substantially overlapped. Separating degradation from absolute unseen performance makes each hypothesis directly measurable.
+
+## ADR-048 — No composite performance score in V1
+
+**Status:** Accepted for V1
+
+**Decision:** Red and Blue metrics are reported separately. Familiar-to-unseen degradation is normalized by metric direction, but no single Red/Blue or overall score is created.
+
+**Reason:** Attack success, time-to-objective, defense success, and detection time have different cybersecurity meanings and different optimization directions. A composite score would introduce arbitrary weighting.
+
+## ADR-049 — Training diversity is the primary experimental manipulation
+
+**Status:** Accepted for V1
+
+**Decision:** Fixed-network versus diverse-network training is the primary comparison. Algorithm, architecture, budget, opponent protocol, observation model, reward formulation, and evaluation procedure are controlled.
+
+**Reason:** The research question concerns generalization to network configurations, not algorithm ranking or opponent co-adaptation.
+
+## ADR-050 — Research contribution claims remain provisional
+
+**Status:** Accepted for V1
+
+**Decision:** AEGIS will not claim novelty for cyber-agent RL, Red/Blue simulation, or generalization to novel scenarios. The candidate contribution is a controlled empirical study isolating training exposure to network-configuration diversity for Red and Blue policies under held-out configuration evaluation.
+
+**Reason:** Existing literature already covers simulated autonomous cyber agents and generalization/transfer in related settings. The exact contribution must remain conditional on the final literature review.
