@@ -65,11 +65,16 @@ def red_candidate_actions(observation: RedObservation) -> tuple[Action, ...]:
             )
         )
 
-    for target in sorted(
-        neighbors
-        & set(observation.discovered_hosts)
-        - set(observation.known_isolated_hosts)
-    ):
+    if observation.current_host_compromised:
+        move_targets = (
+            neighbors
+            & set(observation.discovered_hosts)
+            - set(observation.known_isolated_hosts)
+        )
+    else:
+        move_targets = set()
+
+    for target in sorted(move_targets):
         actions.append(
             Action(
                 agent=Agent.RED,
@@ -93,6 +98,7 @@ def red_candidate_actions(observation: RedObservation) -> tuple[Action, ...]:
 
     if (
         observation.current_position in observation.discovered_hosts
+        and observation.current_host_compromised
         and observation.acquired_privilege != "admin"
         and observation.acquired_privilege != "none"
     ):
