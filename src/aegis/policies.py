@@ -65,7 +65,7 @@ def red_candidate_actions(observation: RedObservation) -> tuple[Action, ...]:
             )
         )
 
-    if observation.current_host_compromised:
+    if observation.current_position == "internet" or observation.current_host_compromised:
         move_targets = (
             neighbors
             & set(observation.discovered_hosts)
