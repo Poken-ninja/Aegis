@@ -650,3 +650,15 @@ For future phases, every major test claim should identify:
 **Research implication:** Baseline reports must expose invalid-action rate separately. Before RL training, the action interface should be refined so the learning formulation has a principled treatment of invalid actions rather than relying on hidden-state rejection sampling.
 
 **Scope:** The current runner is measurement scaffolding for baseline validation, not yet the final RL environment interface.
+
+## ADR-045 — Blue detection is evidence-based
+
+**Status:** Accepted for Phase 2
+
+**Decision:** Blue may use `DETECT` on a host when synthetic telemetry provides observable activity for that host, even if the underlying Red action did not successfully compromise it. `ISOLATE` and `REMEDIATE` continue to require detected compromise.
+
+**Reason:** The observation model intentionally gives Blue activity evidence rather than hidden compromise ground truth. An exploit attempt can generate telemetry whether exploitation succeeds or fails. Requiring hidden compromise for `DETECT` would make the observation-derived Blue policy select actions that the simulator rejects, or would force forbidden state leakage into the policy.
+
+**Cybersecurity meaning:** Detection represents identifying suspicious activity; it is not equivalent to proving compromise. Containment and remediation operate on the stronger condition that a compromise has actually occurred.
+
+**Research implication:** Baseline and future learned Blue policies can make detection decisions from observable evidence without receiving `compromised_hosts`. Detection validity is therefore separated from containment validity.
