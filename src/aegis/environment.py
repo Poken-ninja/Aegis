@@ -333,11 +333,11 @@ class AegisEnvironment:
             self.state.host_privileges[target] = PrivilegeLevel.ADMIN
 
     def _blue_detect(self, target: str | None) -> None:
-        """Mark a compromised host as detected by Blue.
+        """Record Blue detection of observable activity on a host.
 
-        This is a Phase-1 state-transition primitive. The eventual RL
-        observation model must determine how Blue can identify candidate
-        hosts without receiving the hidden compromised_hosts state directly.
+        Detection is evidence-based: Blue may detect suspicious activity even
+        when the underlying action did not produce a compromise. This keeps
+        the action consistent with the synthetic telemetry observation model.
         """
 
         if target is None:
@@ -345,9 +345,16 @@ class AegisEnvironment:
 
         self.network.host(target)
 
-        if target not in self.state.compromised_hosts:
+        telemetry_hosts = {
+            endpoint
+            for event in self.state.telemetry
+            for endpoint in (event.source, event.target)
+            if endpoint is not None
+        }
+
+        if target not in telemetry_hosts:
             raise ValueError(
-                f"DETECT requires a compromised host: {target}"
+                f"DETECT requires observable telemetry for host: {target}"
             )
 
         self.state.detected_hosts.add(target)
