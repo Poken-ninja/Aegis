@@ -74,7 +74,14 @@ class ExploitRedPolicy:
 
 
 def test_runner_does_not_misclassify_simulator_error_as_invalid_action(monkeypatch) -> None:
-    environment = AegisEnvironment(seed=0)
+    class BrokenEnvironment(AegisEnvironment):
+        def reset(self):
+            state = super().reset()
+            state.red_position = "web01"
+            state.discovered_hosts.add("web01")
+            return state
+
+    environment = BrokenEnvironment(seed=0)
 
     def broken_privilege_check(current, required):
         raise ValueError("synthetic simulator configuration error")
