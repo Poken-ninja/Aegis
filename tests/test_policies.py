@@ -8,6 +8,8 @@ from aegis.observations import (
 )
 from aegis.policies import (
     RandomBluePolicy,
+    HeuristicBluePolicy,
+    HeuristicRedPolicy,
     RandomRedPolicy,
     blue_candidate_actions,
     red_candidate_actions,
@@ -246,3 +248,132 @@ def test_red_observation_local_neighbor_does_not_reveal_distant_edge() -> None:
 
     assert ("app01", "web01") in observation.known_connections
     assert ("app01", "db01") not in observation.known_connections
+
+
+def test_heuristic_red_prioritizes_escalation() -> None:
+    observation = RedObservation(
+        current_position="app01",
+        discovered_hosts=frozenset({"app01", "db01"}),
+        known_connections=frozenset({("app01", "db01")}),
+        known_host_roles={"app01": "application_server", "db01": "database_server"},
+        known_vulnerabilities=frozenset({"SYNTH_APP_01"}),
+        current_host_compromised=True,
+        acquired_privilege="user",
+    )
+
+    action = HeuristicRedPolicy().select_action(observation, random.Random(0))
+
+    assert action == Action(
+        agent=Agent.RED,
+        action_type=ActionType.ESCALATE,
+        target="app01",
+    )
+
+
+def test_heuristic_red_prioritizes_exploit_before_discovery() -> None:
+    observation = RedObservation(
+        current_position="web01",
+        discovered_hosts=frozenset({"web01"}),
+        known_connections=frozenset({("web01", "app01")}),
+        known_host_roles={"web01": "web_server", "app01": "application_server"},
+        known_vulnerabilities=frozenset({"SYNTH_WEB_01"}),
+    )
+
+    action = HeuristicRedPolicy().select_action(observation, random.Random(0))
+
+    assert action == Action(
+        agent=Agent.RED,
+        action_type=ActionType.EXPLOIT,
+        target="web01",
+    )
+
+
+def test_heuristic_red_moves_toward_higher_priority_known_role() -> None:
+    observation = RedObservation(
+        current_position="app01",
+        discovered_hosts=frozenset({"app01", "web01", "db01"}),
+        known_connections=frozenset(
+            {
+                ("app01", "web01"),
+                ("app01", "db01"),
+            }
+        ),
+        known_host_roles={
+            "app01": "application_server",
+            "web01": "web_server",
+            "db01": "database_server",
+        },
+        current_host_compromised=True,
+    )
+
+    action = HeuristicRedPolicy().select_action(observation, random.Random(0))
+
+    assert action == Action(
+        agent=Agent.RED,
+        action_type=ActionType.MOVE,
+        target="db01",
+    )
+
+
+def test_heuristic_blue_detects_oldest_undetected_telemetry_target() -> None:
+    observation = BlueObservation(
+        telemetry=(
+            TelemetryEvent(
+                event_type=TelemetryType.DISCOVERY_ACTIVITY,
+                source="internet",
+                target="web01",
+            ),
+            TelemetryEvent(
+                event_type=TelemetryType.EXPLOIT_ATTEMPT,
+                source="app01",
+                target="app01",
+            ),
+        )
+    )
+
+    action = HeuristicBluePolicy().select_action(
+        observation,
+        random.Random(0),
+    )
+
+    assert action == Action(
+        agent=Agent.BLUE,
+        action_type=ActionType.DETECT,
+        target="web01",
+    )
+
+
+def test_heuristic_blue_isolates_after_observable_targets_are_detected() -> None:
+    observation = BlueObservation(
+        detected_hosts=frozenset({"app01"}),
+        telemetry=(
+            TelemetryEvent(
+                event_type=TelemetryType.EXPLOIT_ATTEMPT,
+                source="app01",
+                target="app01",
+            ),
+        ),
+    )
+
+    action = HeuristicBluePolicy().select_action(
+        observation,
+        random.Random(0),
+    )
+
+    assert action == Action(
+        agent=Agent.BLUE,
+        action_type=ActionType.ISOLATE,
+        target="app01",
+    )
+
+
+def test_heuristic_blue_defaults_to_monitor_without_evidence() -> None:
+    action = HeuristicBluePolicy().select_action(
+        BlueObservation(),
+        random.Random(0),
+    )
+
+    assert action == Action(
+        agent=Agent.BLUE,
+        action_type=ActionType.MONITOR,
+    )
