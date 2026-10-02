@@ -121,10 +121,10 @@ def test_red_cannot_see_vulnerabilities_on_undiscovered_hosts() -> None:
 
     observation = build_red_observation(network, state)
 
-    assert "SYNTH_WEB_01" in observation.known_vulnerabilities
-    assert "SYNTH_APP_01" not in observation.known_vulnerabilities
-    assert "SYNTH_DB_01" not in observation.known_vulnerabilities
-    assert "SYNTH_CRITICAL_01" not in observation.known_vulnerabilities
+    assert ("web01", "SYNTH_WEB_01") in observation.known_vulnerabilities
+    assert ("app01", "SYNTH_APP_01") not in observation.known_vulnerabilities
+    assert ("db01", "SYNTH_DB_01") not in observation.known_vulnerabilities
+    assert ("critical01", "SYNTH_CRITICAL_01") not in observation.known_vulnerabilities
 
 
 def test_red_cannot_see_remediation_on_undiscovered_host() -> None:
