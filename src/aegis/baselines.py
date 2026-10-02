@@ -119,7 +119,7 @@ def summarize_baseline_results(
             blue_wins / valid_count if valid_count else None
         ),
         red_actions_to_objective=tuple(
-            sum(step.agent.value == "red" for step in result.steps)
+            result.steps[-1].step_index
             for result in successful_red_episodes
         ),
         blue_detection_times=tuple(detection_times),
