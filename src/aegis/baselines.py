@@ -42,16 +42,29 @@ class BaselineSummary:
 
 
 def _detection_time(result: EpisodeResult) -> int | None:
-    """Return the first step detecting a compromised host, if any."""
+    """Return latency from first observable activity to first detection.
+
+    The metric uses only telemetry that was publicly observable to Blue. A
+    detection does not require successful compromise because the simulator
+    explicitly models detection of suspicious activity, including failed
+    exploit attempts.
+    """
+
+    first_observable_step: dict[str, int] = {}
 
     for step in result.steps:
+        for event in step.resulting_state.telemetry:
+            for host_id in (event.source, event.target):
+                if host_id is not None and host_id not in first_observable_step:
+                    first_observable_step[host_id] = step.step_index
+
         if (
             step.agent.value == "blue"
             and step.action.action_type.value == "detect"
             and step.action.target is not None
-            and step.action.target in step.resulting_state.compromised_hosts
+            and step.action.target in first_observable_step
         ):
-            return step.step_index
+            return step.step_index - first_observable_step[step.action.target]
 
     return None
 
