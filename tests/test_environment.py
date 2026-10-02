@@ -1157,3 +1157,26 @@ def test_telemetry_resets_with_new_episode() -> None:
     environment.reset()
 
     assert environment.state.telemetry == []
+
+def test_escalation_telemetry_is_visible_to_next_blue_observation() -> None:
+    from aegis.observations import build_blue_observation
+    from aegis.telemetry import TelemetryType
+
+    env = AegisEnvironment(seed=3)
+    _move_red_to_web01_and_compromise(env)
+
+    env.step(
+        Action(
+            agent=Agent.RED,
+            action_type=ActionType.ESCALATE,
+            target="web01",
+        )
+    )
+
+    observation = build_blue_observation(env.network, env.state)
+
+    assert any(
+        event.event_type is TelemetryType.PRIVILEGE_ESCALATION
+        and event.source == "web01"
+        for event in observation.telemetry
+    )
