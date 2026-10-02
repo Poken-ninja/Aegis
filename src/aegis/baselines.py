@@ -36,6 +36,7 @@ class BaselineSummary:
     policy_error_episodes: int
     red_attack_success_rate: float | None
     blue_defense_success_rate: float | None
+    blue_detection_rate: float | None
     red_actions_to_objective: tuple[int, ...]
     blue_detection_times: tuple[int, ...]
     episodes_per_second: float
@@ -138,6 +139,9 @@ def summarize_baseline_results(
         ),
         blue_defense_success_rate=(
             blue_wins / valid_count if valid_count else None
+        ),
+        blue_detection_rate=(
+            len(detection_times) / valid_count if valid_count else None
         ),
         red_actions_to_objective=tuple(
             result.steps[-1].step_index
