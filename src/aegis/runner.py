@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 from aegis.actions import Action, Agent
-from aegis.environment import AegisEnvironment
+from aegis.environment import AegisEnvironment, InvalidActionError
 from aegis.observations import (
     BlueObservation,
     RedObservation,
@@ -107,7 +107,7 @@ def run_episode(
 
         try:
             resulting_state = environment.step(action)
-        except ValueError:
+        except InvalidActionError:
             invalid_action_count += 1
             return EpisodeResult(
                 configuration_id=environment.network.configuration_id,
