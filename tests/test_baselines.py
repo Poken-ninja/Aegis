@@ -60,6 +60,7 @@ def test_random_baseline_metrics_are_bounded() -> None:
         assert 0 <= summary.blue_defense_success_rate <= 1
 
     assert summary.episodes_per_second > 0
+    assert summary.actions_per_second > 0
 
 
 def test_summary_rejects_mixed_configurations() -> None:
