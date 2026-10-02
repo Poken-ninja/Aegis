@@ -343,7 +343,7 @@ def test_heuristic_blue_detects_oldest_undetected_telemetry_target() -> None:
     )
 
 
-def test_heuristic_blue_isolates_after_observable_targets_are_detected() -> None:
+def test_heuristic_blue_does_not_isolate_from_detection_alone() -> None:
     observation = BlueObservation(
         detected_hosts=frozenset({"app01"}),
         telemetry=(
@@ -362,8 +362,7 @@ def test_heuristic_blue_isolates_after_observable_targets_are_detected() -> None
 
     assert action == Action(
         agent=Agent.BLUE,
-        action_type=ActionType.ISOLATE,
-        target="app01",
+        action_type=ActionType.MONITOR,
     )
 
 
