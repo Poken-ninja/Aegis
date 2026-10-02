@@ -232,9 +232,6 @@ def test_heuristic_baseline_runs_across_multiple_generated_configurations() -> N
                 HeuristicBluePolicy(),
                 policy_seed=episode_seed,
             )
-            assert result.termination_reason in {
-                "terminal_outcome",
-                "invalid_action",
-                "policy_error",
-            }
+            assert result.termination_reason == "terminal_outcome"
+            assert result.invalid_action_count == 0
             assert result.steps
