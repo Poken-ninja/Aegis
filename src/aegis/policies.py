@@ -83,9 +83,15 @@ def red_candidate_actions(observation: RedObservation) -> tuple[Action, ...]:
             )
         )
 
+    known_current_vulnerabilities = {
+        vulnerability_id
+        for host_id, vulnerability_id in observation.known_vulnerabilities
+        if host_id == observation.current_position
+    }
+
     if (
         observation.current_position in observation.discovered_hosts
-        and observation.known_vulnerabilities
+        and known_current_vulnerabilities
         - observation.known_remediated_vulnerabilities
     ):
         actions.append(
@@ -231,13 +237,13 @@ class HeuristicRedPolicy:
             return escalations[0]
 
         exploits = [
-                action
+            action
             for action in candidates
-        if (
-        action.action_type is ActionType.EXPLOIT
-        and not observation.current_host_compromised
-       )
-       ]
+            if (
+                action.action_type is ActionType.EXPLOIT
+                and not observation.current_host_compromised
+            )
+        ]
         if exploits:
             return exploits[0]
 
