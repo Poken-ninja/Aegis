@@ -426,7 +426,7 @@ class AegisEnvironment:
         try:
             required_level = PrivilegeLevel(required)
         except ValueError as exc:
-            raise InvalidActionError(
+            raise ValueError(
                 f"Unknown required privilege: {required}"
             ) from exc
 
