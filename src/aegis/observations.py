@@ -17,7 +17,7 @@ class RedObservation:
     discovered_hosts: frozenset[str] = frozenset()
     known_connections: frozenset[tuple[str, str]] = frozenset()
     known_host_roles: dict[str, str] = field(default_factory=dict)
-    known_vulnerabilities: frozenset[str] = frozenset()
+    known_vulnerabilities: frozenset[tuple[str, str]] = frozenset()
     known_remediated_vulnerabilities: frozenset[str] = frozenset()
     known_isolated_hosts: frozenset[str] = frozenset()
     current_host_compromised: bool = False
@@ -63,14 +63,14 @@ def build_red_observation(
         for host_id in discovered_hosts
     }
 
-    known_vulnerabilities: set[str] = set()
+    known_vulnerabilities: set[tuple[str, str]] = set()
     known_remediated_vulnerabilities: set[str] = set()
 
     for host_id in discovered_hosts:
         host = network.host(host_id)
 
         for vulnerability in host.vulnerabilities:
-            known_vulnerabilities.add(vulnerability.vulnerability_id)
+            known_vulnerabilities.add((host_id, vulnerability.vulnerability_id))
 
             if vulnerability.vulnerability_id in state.remediated_vulnerabilities:
                 known_remediated_vulnerabilities.add(
