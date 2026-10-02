@@ -155,3 +155,58 @@ def test_heuristic_baseline_is_reproducible_except_throughput() -> None:
     assert first.blue_defense_success_rate == second.blue_defense_success_rate
     assert first.red_actions_to_objective == second.red_actions_to_objective
     assert first.blue_detection_times == second.blue_detection_times
+
+
+def test_detection_time_uses_observable_activity_not_compromise() -> None:
+    from aegis.actions import Action, ActionType, Agent
+    from aegis.baselines import _detection_time
+    from aegis.runner import EpisodeResult, EpisodeStep
+    from aegis.state import CyberState, Outcome
+    from aegis.telemetry import TelemetryEvent, TelemetryType
+
+    first_state = CyberState(red_position="web01", step_count=1)
+    first_state.telemetry.append(
+        TelemetryEvent(
+            event_type=TelemetryType.EXPLOIT_ATTEMPT,
+            source="web01",
+            target="app01",
+        )
+    )
+
+    second_state = CyberState(red_position="web01", step_count=2)
+    second_state.telemetry = list(first_state.telemetry)
+
+    result = EpisodeResult(
+        configuration_id="NET_00001",
+        configuration_seed=0,
+        episode_seed=0,
+        outcome=Outcome.TIMEOUT,
+        termination_reason="terminal_outcome",
+        steps=(
+            EpisodeStep(
+                step_index=1,
+                agent=Agent.RED,
+                observation=None,
+                action=Action(
+                    agent=Agent.RED,
+                    action_type=ActionType.EXPLOIT,
+                    target="app01",
+                ),
+                resulting_state=first_state,
+            ),
+            EpisodeStep(
+                step_index=2,
+                agent=Agent.BLUE,
+                observation=None,
+                action=Action(
+                    agent=Agent.BLUE,
+                    action_type=ActionType.DETECT,
+                    target="app01",
+                ),
+                resulting_state=second_state,
+            ),
+        ),
+        invalid_action_count=0,
+    )
+
+    assert _detection_time(result) == 1
