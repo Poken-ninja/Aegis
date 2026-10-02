@@ -11,7 +11,12 @@ from dataclasses import dataclass
 import time
 
 from aegis.environment import AegisEnvironment
-from aegis.policies import RandomBluePolicy, RandomRedPolicy
+from aegis.policies import (
+    HeuristicBluePolicy,
+    HeuristicRedPolicy,
+    RandomBluePolicy,
+    RandomRedPolicy,
+)
 from aegis.runner import EpisodeResult, run_episode
 from aegis.state import Outcome
 
@@ -166,6 +171,52 @@ def run_random_baseline(
                 RandomRedPolicy(),
                 RandomBluePolicy(),
                 policy_seed=episode_seed_start + episode_index,
+            )
+        )
+
+    elapsed = time.perf_counter() - started
+
+    return summarize_baseline_results(
+        results,
+        elapsed_seconds=elapsed,
+    )
+
+
+def run_heuristic_baseline(
+    *,
+    episode_count: int = 100,
+    configuration_seed: int = 0,
+    episode_seed_start: int = 0,
+    max_steps: int = 50,
+) -> BaselineSummary:
+    """Run deterministic heuristic Red versus Blue on the reference network."""
+
+    if episode_count <= 0:
+        raise ValueError("episode_count must be positive")
+
+    from aegis.network import build_reference_network
+
+    network = build_reference_network(
+        configuration_id="NET_00001",
+        seed=configuration_seed,
+    )
+
+    results: list[EpisodeResult] = []
+    started = time.perf_counter()
+
+    for episode_index in range(episode_count):
+        episode_seed = episode_seed_start + episode_index
+        environment = AegisEnvironment(
+            network=network,
+            seed=episode_seed,
+            max_steps=max_steps,
+        )
+        results.append(
+            run_episode(
+                environment,
+                HeuristicRedPolicy(),
+                HeuristicBluePolicy(),
+                policy_seed=episode_seed,
             )
         )
 
