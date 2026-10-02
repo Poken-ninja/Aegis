@@ -1,6 +1,8 @@
-from aegis.baselines import run_random_baseline, summarize_baseline_results
+from aegis.baselines import run_random_baseline, summarize_baseline_results, run_heuristic_baseline
 from aegis.runner import run_episode
 from aegis.environment import AegisEnvironment
+from aegis.configurations import generate_network
+from aegis.policies import HeuristicBluePolicy, HeuristicRedPolicy
 from aegis.policies import RandomBluePolicy, RandomRedPolicy
 
 
@@ -211,3 +213,28 @@ def test_detection_time_uses_observable_activity_not_compromise() -> None:
     )
 
     assert _detection_time(result) == 1
+
+
+def test_heuristic_baseline_runs_across_multiple_generated_configurations() -> None:
+    for configuration_seed in range(5):
+        network = generate_network(
+            configuration_id=f"GEN_{configuration_seed:05d}",
+            seed=configuration_seed,
+        )
+        for episode_seed in range(3):
+            result = run_episode(
+                AegisEnvironment(
+                    network=network,
+                    seed=episode_seed,
+                    max_steps=50,
+                ),
+                HeuristicRedPolicy(),
+                HeuristicBluePolicy(),
+                policy_seed=episode_seed,
+            )
+            assert result.termination_reason in {
+                "terminal_outcome",
+                "invalid_action",
+                "policy_error",
+            }
+            assert result.steps
