@@ -272,10 +272,10 @@ class HeuristicBluePolicy:
     """Deterministic Blue baseline using only observable telemetry.
 
     The policy first detects the oldest currently undetected telemetry target.
-    Once all observed targets have been detected, it attempts to isolate the
-    first detected host. Isolation may be rejected when telemetry came from a
-    failed exploit; that is intentional and represents uncertainty under the
-    observation boundary rather than hidden-state access.
+    After detection, the policy only attempts isolation when the observation
+    provides evidence that the host is already contained by the simulator's
+    response model. Because Blue does not observe hidden compromise state,
+    uncertain telemetry alone does not justify isolation.
     """
 
     def select_action(
@@ -301,13 +301,10 @@ class HeuristicBluePolicy:
                 target=undetected[0],
             )
 
-        if observation.detected_hosts:
-            return Action(
-                agent=Agent.BLUE,
-                action_type=ActionType.ISOLATE,
-                target=sorted(observation.detected_hosts)[0],
-            )
-
+        # DETECT is evidence-based, but the current public Blue observation
+        # does not expose compromise state. Therefore the heuristic cannot
+        # justify ISOLATE from detection alone without violating the
+        # observation boundary. Continue monitoring instead.
         return Action(
             agent=Agent.BLUE,
             action_type=ActionType.MONITOR,
