@@ -256,7 +256,7 @@ def test_heuristic_red_prioritizes_escalation() -> None:
         discovered_hosts=frozenset({"app01", "db01"}),
         known_connections=frozenset({("app01", "db01")}),
         known_host_roles={"app01": "application_server", "db01": "database_server"},
-        known_vulnerabilities=frozenset({"SYNTH_APP_01"}),
+        known_vulnerabilities=frozenset({("app01", "SYNTH_APP_01")}),
         current_host_compromised=True,
         acquired_privilege="user",
     )
@@ -276,7 +276,7 @@ def test_heuristic_red_prioritizes_exploit_before_discovery() -> None:
         discovered_hosts=frozenset({"web01"}),
         known_connections=frozenset({("web01", "app01")}),
         known_host_roles={"web01": "web_server", "app01": "application_server"},
-        known_vulnerabilities=frozenset({"SYNTH_WEB_01"}),
+        known_vulnerabilities=frozenset({("web01", "SYNTH_WEB_01")}),
     )
 
     action = HeuristicRedPolicy().select_action(observation, random.Random(0))
@@ -401,3 +401,37 @@ def test_heuristic_red_does_not_reexploit_compromised_host() -> None:
         action_type=ActionType.MOVE,
         target="app01",
     )
+
+def test_red_candidate_generation_does_not_exploit_vulnerability_on_other_host() -> None:
+    observation = RedObservation(
+        current_position="web01",
+        discovered_hosts=frozenset({"web01", "app01"}),
+        known_vulnerabilities=frozenset({
+            ("app01", "SYNTH_APP_01"),
+        }),
+    )
+
+    candidates = red_candidate_actions(observation)
+
+    assert all(
+        action.action_type is not ActionType.EXPLOIT
+        for action in candidates
+    )
+
+
+def test_red_candidate_generation_exploits_vulnerability_on_current_host() -> None:
+    observation = RedObservation(
+        current_position="web01",
+        discovered_hosts=frozenset({"web01"}),
+        known_vulnerabilities=frozenset({
+            ("web01", "SYNTH_WEB_01"),
+        }),
+    )
+
+    candidates = red_candidate_actions(observation)
+
+    assert Action(
+        agent=Agent.RED,
+        action_type=ActionType.EXPLOIT,
+        target="web01",
+    ) in candidates
