@@ -39,6 +39,7 @@ class BaselineSummary:
     red_actions_to_objective: tuple[int, ...]
     blue_detection_times: tuple[int, ...]
     episodes_per_second: float
+    actions_per_second: float
 
 
 def _detection_time(result: EpisodeResult) -> int | None:
@@ -114,6 +115,8 @@ def summarize_baseline_results(
 
     valid_count = len(valid_results)
 
+    total_actions = sum(len(result.steps) for result in results)
+
     return BaselineSummary(
         configuration_id=next(iter(configuration_ids)),
         configuration_seed=next(iter(configuration_seeds)),
@@ -142,6 +145,7 @@ def summarize_baseline_results(
         ),
         blue_detection_times=tuple(detection_times),
         episodes_per_second=len(results) / elapsed_seconds,
+        actions_per_second=total_actions / elapsed_seconds,
     )
 
 
