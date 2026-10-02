@@ -118,11 +118,13 @@ This is not a claim of general real-world prevention effectiveness.
 
 ### Blue detection time
 
-For episodes where Blue detects the relevant compromised host:
+For an episode in which Blue detects a host with observable Red activity:
 
-> number of environment actions completed through the Blue action that first marks that host as detected.
+> environment actions elapsed from the first telemetry event involving that host to the first Blue `DETECT` action for that host.
 
-Detection time is undefined for episodes where the relevant host is never detected; those episodes remain represented in detection-rate reporting rather than being silently discarded from all analyses.
+This is an observable-activity latency metric. It does not require successful compromise because the simulator explicitly models detection of suspicious activity, including failed exploit attempts.
+
+Episodes with no detection remain represented as undetected episodes; detection latency is not imputed.
 
 ### Familiar-to-unseen degradation
 
@@ -159,6 +161,8 @@ The configuration remains fixed across training episodes.
 ### Training condition B — Diverse
 
 The policy trains across multiple configurations sampled from the predefined training configuration set/distribution.
+
+For V1, the generator varies internal network topology/connectivity while keeping the six host roles and synthetic vulnerability semantics fixed. This isolates topology exposure as the first controlled form of configuration diversity.
 
 ### Equal-budget rule
 
@@ -417,7 +421,7 @@ RL training does not begin until:
 
 ## 19. Literature-grounding note
 
-The design deliberately does not claim that autonomous cyber-agent generalization is unexplored.
+The design deliberately does not claim that autonomous cyber-agent generalization is unexplored. Recent work makes the gap narrower than an initial review might suggest: Thompson et al. (2024) explicitly study generalisation across diverse network topologies/configurations using entity-based RL, Dudman and Bull (2025) study network-agnostic defensive generalisation across differing topology/size, and Morris (2025) evaluates generalisability under perturbed network architectures and other simulation conditions.
 
 CyberBattleSim already demonstrated abstract Red/Blue interaction in a simulated enterprise environment and highlighted the importance of network topology/configuration to lateral movement. NASimEmu explicitly studied agents transferring to novel scenarios. Other work has studied RL defenders, attacker/defender simulation, and generalization across attacker strategies.
 
