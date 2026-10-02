@@ -53,7 +53,7 @@ class AegisEnvironment:
             raise RuntimeError("Cannot step a terminated episode")
 
         if action.agent is not self.current_agent:
-            raise ValueError(
+            raise InvalidActionError(
                 f"It is {self.current_agent.value}'s turn, "
                 f"not {action.agent.value}'s turn"
             )
@@ -133,14 +133,14 @@ class AegisEnvironment:
 
     def _red_discover(self, target: str | None) -> None:
         if target is None:
-            raise ValueError("DISCOVER requires a target")
+            raise InvalidActionError("DISCOVER requires a target")
 
         self.network.host(target)
 
         current_position = self.state.red_position
 
         if target not in self.network.neighbors(current_position):
-            raise ValueError(
+            raise InvalidActionError(
                 f"Host {target} is not directly reachable from "
                 f"{current_position}"
             )
@@ -155,35 +155,35 @@ class AegisEnvironment:
 
     def _red_move(self, target: str | None) -> None:
         if target is None:
-            raise ValueError("MOVE requires a target")
+            raise InvalidActionError("MOVE requires a target")
 
         self.network.host(target)
 
         current_position = self.state.red_position
 
         if current_position in self.state.isolated_hosts:
-            raise ValueError(
+            raise InvalidActionError(
                 f"Red cannot move from isolated host {current_position}"
             )
 
         if target not in self.state.discovered_hosts:
-            raise ValueError(
+            raise InvalidActionError(
                 f"Host {target} has not been discovered"
             )
 
         if target not in self.network.neighbors(current_position):
-            raise ValueError(
+            raise InvalidActionError(
                 f"Host {target} is not directly reachable from "
                 f"{current_position}"
             )
 
         if target in self.state.isolated_hosts:
-            raise ValueError(
+            raise InvalidActionError(
                 f"Host {target} is isolated"
             )
 
         if not self._movement_allowed(current_position, target):
-            raise ValueError(
+            raise InvalidActionError(
                 f"Red lacks a compromised foothold required to move "
                 f"from {current_position} to {target}"
             )
@@ -217,17 +217,17 @@ class AegisEnvironment:
 
     def _red_exploit(self, target: str | None) -> None:
         if target is None:
-            raise ValueError("EXPLOIT requires a target")
+            raise InvalidActionError("EXPLOIT requires a target")
 
         host = self.network.host(target)
 
         if target != self.state.red_position:
-            raise ValueError(
+            raise InvalidActionError(
                 "EXPLOIT target must be Red's current host"
             )
 
         if target not in self.state.discovered_hosts:
-            raise ValueError(
+            raise InvalidActionError(
                 f"Host {target} has not been discovered"
             )
 
@@ -239,7 +239,7 @@ class AegisEnvironment:
         ]
 
         if not available_vulnerabilities:
-            raise ValueError(
+            raise InvalidActionError(
                 f"Host {target} has no exploitable vulnerabilities"
             )
 
@@ -255,7 +255,7 @@ class AegisEnvironment:
         ]
 
         if not eligible_vulnerabilities:
-            raise ValueError(
+            raise InvalidActionError(
                 f"Red lacks the required privilege to exploit {target}"
             )
 
@@ -294,17 +294,17 @@ class AegisEnvironment:
 
     def _red_escalate(self, target: str | None) -> None:
         if target is None:
-            raise ValueError("ESCALATE requires a target")
+            raise InvalidActionError("ESCALATE requires a target")
 
         self.network.host(target)
 
         if target != self.state.red_position:
-            raise ValueError(
+            raise InvalidActionError(
                 "ESCALATE target must be Red's current host"
             )
 
         if target not in self.state.compromised_hosts:
-            raise ValueError(
+            raise InvalidActionError(
                 f"Host {target} has not been compromised"
             )
 
@@ -314,7 +314,7 @@ class AegisEnvironment:
         )
 
         if current_privilege is PrivilegeLevel.ADMIN:
-            raise ValueError(
+            raise InvalidActionError(
                 f"Red already has ADMIN privilege on {target}"
             )
 
@@ -341,7 +341,7 @@ class AegisEnvironment:
         """
 
         if target is None:
-            raise ValueError("DETECT requires a target")
+            raise InvalidActionError("DETECT requires a target")
 
         self.network.host(target)
 
@@ -353,7 +353,7 @@ class AegisEnvironment:
         }
 
         if target not in telemetry_hosts:
-            raise ValueError(
+            raise InvalidActionError(
                 f"DETECT requires observable telemetry for host: {target}"
             )
 
@@ -363,17 +363,17 @@ class AegisEnvironment:
         """Isolate a detected compromised host from Red's attack path."""
 
         if target is None:
-            raise ValueError("ISOLATE requires a target")
+            raise InvalidActionError("ISOLATE requires a target")
 
         self.network.host(target)
 
         if target not in self.state.compromised_hosts:
-            raise ValueError(
+            raise InvalidActionError(
                 f"ISOLATE requires a compromised host: {target}"
             )
 
         if target not in self.state.detected_hosts:
-            raise ValueError(
+            raise InvalidActionError(
                 f"ISOLATE requires a detected host: {target}"
             )
 
@@ -383,17 +383,17 @@ class AegisEnvironment:
         """Remediate an unremediated vulnerability on a detected host."""
 
         if target is None:
-            raise ValueError("REMEDIATE requires a target")
+            raise InvalidActionError("REMEDIATE requires a target")
 
         host = self.network.host(target)
 
         if target not in self.state.compromised_hosts:
-            raise ValueError(
+            raise InvalidActionError(
                 f"REMEDIATE requires a compromised host: {target}"
             )
 
         if target not in self.state.detected_hosts:
-            raise ValueError(
+            raise InvalidActionError(
                 f"REMEDIATE requires a detected host: {target}"
             )
 
@@ -405,7 +405,7 @@ class AegisEnvironment:
         ]
 
         if not available_vulnerabilities:
-            raise ValueError(
+            raise InvalidActionError(
                 f"No unremediated vulnerabilities on host: {target}"
             )
 
@@ -426,7 +426,7 @@ class AegisEnvironment:
         try:
             required_level = PrivilegeLevel(required)
         except ValueError as exc:
-            raise ValueError(
+            raise InvalidActionError(
                 f"Unknown required privilege: {required}"
             ) from exc
 
