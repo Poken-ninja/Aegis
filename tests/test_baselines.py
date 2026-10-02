@@ -87,3 +87,43 @@ def test_summary_rejects_mixed_configurations() -> None:
         assert "one fixed configuration" in str(exc)
     else:
         raise AssertionError("mixed configurations must be rejected")
+
+
+def test_red_actions_to_objective_counts_environment_actions() -> None:
+    from aegis.actions import Action, ActionType, Agent
+    from aegis.runner import EpisodeResult, EpisodeStep
+    from aegis.state import CyberState, Outcome
+
+    steps = tuple(
+        EpisodeStep(
+            step_index=index,
+            agent=Agent.RED if index % 2 else Agent.BLUE,
+            observation=None,
+            action=Action(
+                agent=Agent.RED if index % 2 else Agent.BLUE,
+                action_type=(
+                    ActionType.DISCOVER
+                    if index % 2
+                    else ActionType.MONITOR
+                ),
+            ),
+            resulting_state=CyberState(red_position="internet"),
+        )
+        for index in range(1, 4)
+    )
+    result = EpisodeResult(
+        configuration_id="NET_00001",
+        configuration_seed=0,
+        episode_seed=0,
+        outcome=Outcome.RED_WIN,
+        termination_reason="terminal_outcome",
+        steps=steps,
+        invalid_action_count=0,
+    )
+
+    summary = summarize_baseline_results(
+        [result],
+        elapsed_seconds=1.0,
+    )
+
+    assert summary.red_actions_to_objective == (3,)
