@@ -386,7 +386,7 @@ def test_heuristic_red_does_not_reexploit_compromised_host() -> None:
             "web01": "web_server",
             "app01": "application_server",
         },
-        known_vulnerabilities=frozenset({"SYNTH_WEB_01"}),
+        known_vulnerabilities=frozenset({("web01", "SYNTH_WEB_01")}),
         current_host_compromised=True,
         acquired_privilege="admin",
     )
