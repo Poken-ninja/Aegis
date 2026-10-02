@@ -434,6 +434,9 @@ AEGIS therefore treats **controlled training-diversity comparison under held-out
 - Nyberg and Johnson, *Training Automated Defense Strategies Using Graph-based Cyber Attack Simulations* (2023).
 - Hammar and Stadler, *Learning Near-Optimal Intrusion Responses Against Dynamic Attackers* (2023).
 - Nyberg et al., *The MAL Simulator: Cyber Operations Simulation based on Attack & Defense Graphs* (2026).
+- Thompson et al., *Entity-based Reinforcement Learning for Autonomous Cyber Defence* (2024), which explicitly studies generalisation across diverse network topologies/configurations.
+- Dudman and Bull, *Towards a Generalisable Cyber Defence Agent for Real-World Computer Networks* (2025), which studies network-agnostic defensive generalisation across differing topology and size.
+- Morris, *Evaluating Reinforcement Learning Agents for Autonomous Cyber Defence* (2025), which evaluates generalisability under perturbed simulation conditions.
 - Wang et al., *CyberGym* and *CyberGym-E2E* (2025–2026), which concern LLM/AI-agent cybersecurity evaluation rather than the core AEGIS RL experiment.
 
 These references are used to constrain the contribution claim, not to imply that AEGIS has reproduced or surpassed those systems.
