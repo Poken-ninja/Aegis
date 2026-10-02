@@ -127,3 +127,31 @@ def test_red_actions_to_objective_counts_environment_actions() -> None:
     )
 
     assert summary.red_actions_to_objective == (3,)
+
+
+def test_heuristic_baseline_is_reproducible_except_throughput() -> None:
+    from aegis.baselines import run_heuristic_baseline
+
+    first = run_heuristic_baseline(
+        episode_count=20,
+        configuration_seed=3,
+        episode_seed_start=10,
+    )
+    second = run_heuristic_baseline(
+        episode_count=20,
+        configuration_seed=3,
+        episode_seed_start=10,
+    )
+
+    assert first.configuration_id == second.configuration_id
+    assert first.configuration_seed == second.configuration_seed
+    assert first.valid_episode_count == second.valid_episode_count
+    assert first.red_wins == second.red_wins
+    assert first.blue_wins == second.blue_wins
+    assert first.timeouts == second.timeouts
+    assert first.invalid_action_episodes == second.invalid_action_episodes
+    assert first.policy_error_episodes == second.policy_error_episodes
+    assert first.red_attack_success_rate == second.red_attack_success_rate
+    assert first.blue_defense_success_rate == second.blue_defense_success_rate
+    assert first.red_actions_to_objective == second.red_actions_to_objective
+    assert first.blue_detection_times == second.blue_detection_times
