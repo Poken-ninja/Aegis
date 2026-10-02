@@ -2,6 +2,8 @@
 
 import random
 
+import pytest
+
 from aegis.actions import Action, ActionType, Agent
 from aegis.environment import AegisEnvironment
 from aegis.policies import RandomBluePolicy, RandomRedPolicy
@@ -60,3 +62,28 @@ def test_invalid_action_is_not_misclassified_as_simulator_outcome() -> None:
     assert result.outcome is None
     assert result.termination_reason == "invalid_action"
     assert result.invalid_action_count == 1
+
+
+class ExploitRedPolicy:
+    def select_action(self, observation, rng: random.Random) -> Action:
+        return Action(
+            agent=Agent.RED,
+            action_type=ActionType.EXPLOIT,
+            target=observation.current_position,
+        )
+
+
+def test_runner_does_not_misclassify_simulator_error_as_invalid_action(monkeypatch) -> None:
+    environment = AegisEnvironment(seed=0)
+
+    def broken_privilege_check(current, required):
+        raise ValueError("synthetic simulator configuration error")
+
+    monkeypatch.setattr(environment, "_privilege_satisfies", broken_privilege_check)
+
+    with pytest.raises(ValueError, match="synthetic simulator configuration error"):
+        run_episode(
+            environment,
+            ExploitRedPolicy(),
+            RandomBluePolicy(),
+        )
