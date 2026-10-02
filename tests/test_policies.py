@@ -366,6 +366,30 @@ def test_heuristic_blue_does_not_isolate_from_detection_alone() -> None:
     )
 
 
+
+def test_heuristic_blue_isolates_after_detected_escalation_evidence() -> None:
+    observation = BlueObservation(
+        detected_hosts=frozenset({"web01"}),
+        telemetry=(
+            TelemetryEvent(
+                event_type=TelemetryType.PRIVILEGE_ESCALATION,
+                source="web01",
+                target="web01",
+            ),
+        ),
+    )
+
+    action = HeuristicBluePolicy().select_action(
+        observation,
+        random.Random(0),
+    )
+
+    assert action == Action(
+        agent=Agent.BLUE,
+        action_type=ActionType.ISOLATE,
+        target="web01",
+    )
+
 def test_heuristic_blue_defaults_to_monitor_without_evidence() -> None:
     action = HeuristicBluePolicy().select_action(
         BlueObservation(),
