@@ -376,3 +376,28 @@ def test_heuristic_blue_defaults_to_monitor_without_evidence() -> None:
         agent=Agent.BLUE,
         action_type=ActionType.MONITOR,
     )
+
+def test_heuristic_red_does_not_reexploit_compromised_host() -> None:
+    observation = RedObservation(
+        current_position="web01",
+        discovered_hosts=frozenset({"web01", "app01"}),
+        known_connections=frozenset({("web01", "app01")}),
+        known_host_roles={
+            "web01": "web_server",
+            "app01": "application_server",
+        },
+        known_vulnerabilities=frozenset({"SYNTH_WEB_01"}),
+        current_host_compromised=True,
+        acquired_privilege="admin",
+    )
+
+    action = HeuristicRedPolicy().select_action(
+        observation,
+        random.Random(0),
+    )
+
+    assert action == Action(
+        agent=Agent.RED,
+        action_type=ActionType.MOVE,
+        target="app01",
+    )

@@ -107,7 +107,7 @@ def red_candidate_actions(observation: RedObservation) -> tuple[Action, ...]:
                 agent=Agent.RED,
                 action_type=ActionType.ESCALATE,
                 target=observation.current_position,
-            )
+        )
         )
 
     return tuple(actions)
@@ -231,10 +231,13 @@ class HeuristicRedPolicy:
             return escalations[0]
 
         exploits = [
-            action
+                action
             for action in candidates
-            if action.action_type is ActionType.EXPLOIT
-        ]
+        if (
+        action.action_type is ActionType.EXPLOIT
+        and not observation.current_host_compromised
+       )
+       ]
         if exploits:
             return exploits[0]
 
@@ -271,11 +274,10 @@ class HeuristicRedPolicy:
 class HeuristicBluePolicy:
     """Deterministic Blue baseline using only observable telemetry.
 
-    The policy first detects the oldest currently undetected telemetry target.
-    After detection, the policy only attempts isolation when the observation
-    provides evidence that the host is already contained by the simulator's
-    response model. Because Blue does not observe hidden compromise state,
-    uncertain telemetry alone does not justify isolation.
+    Priority:
+    1. Isolate a detected host with privilege-escalation evidence.
+    2. Detect the oldest currently undetected telemetry target.
+    3. Monitor when no response is justified by the observation.
     """
 
     def select_action(
@@ -283,6 +285,25 @@ class HeuristicBluePolicy:
         observation: BlueObservation,
         rng: random.Random,
     ) -> Action:
+        escalation_hosts = []
+
+        for event in observation.telemetry:
+            if (
+                event.event_type.value == "privilege_escalation"
+                and event.source is not None
+                and event.source in observation.detected_hosts
+                and event.source not in observation.isolated_hosts
+            ):
+                if event.source not in escalation_hosts:
+                    escalation_hosts.append(event.source)
+
+        if escalation_hosts:
+            return Action(
+                agent=Agent.BLUE,
+                action_type=ActionType.ISOLATE,
+                target=escalation_hosts[0],
+            )
+
         telemetry_targets = []
         for event in observation.telemetry:
             for target in (event.target, event.source):
@@ -294,6 +315,7 @@ class HeuristicBluePolicy:
             for target in telemetry_targets
             if target not in observation.detected_hosts
         ]
+
         if undetected:
             return Action(
                 agent=Agent.BLUE,
@@ -301,10 +323,6 @@ class HeuristicBluePolicy:
                 target=undetected[0],
             )
 
-        # DETECT is evidence-based, but the current public Blue observation
-        # does not expose compromise state. Therefore the heuristic cannot
-        # justify ISOLATE from detection alone without violating the
-        # observation boundary. Continue monitoring instead.
         return Action(
             agent=Agent.BLUE,
             action_type=ActionType.MONITOR,
