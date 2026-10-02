@@ -10,6 +10,10 @@ from aegis.state import CyberState, Outcome, PrivilegeLevel
 from aegis.telemetry import telemetry_for_red_action
 
 
+class InvalidActionError(ValueError):
+    """Raised when an agent submits an action invalid in the current state."""
+
+
 class AegisEnvironment:
     """Runs one synthetic Red-vs-Blue cyber episode."""
 
